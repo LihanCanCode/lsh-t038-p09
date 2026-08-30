@@ -4,7 +4,7 @@ Solution for **LofiStack Hackathon 2026 — P09**
 
 ## Project information
 
-- **Team:** `<TEAM NAME>`
+- **Team:** `Mrittu Machines`
 - **Team ID:** `LSH26-T038`
 - **Problem:** `P09 — Vehicle Service Due Predictor`
 - **Live application:** `<https://example.com>`
@@ -21,15 +21,15 @@ The application is a smart predictive engine for car workshops in Dhaka to activ
 | Requirement              | Status                             | Where to verify       |
 | ------------------------ | ---------------------------------- | --------------------- |
 | R1 — Create 40+ vehicles, 25+ owners, rules, odometers & history | Complete | Pre-loaded via `P09_vehicle_service_public.json` |
-| R2 — Calculate next due date per rule (distance via daily run rate), mark status | Complete | Calculation engine in `app.js` / Visualized via badges across all UI views |
-| R3 — Daily call list sorted by most overdue and highest value | Complete | "Daily Call List" page (`#/call-list` route) |
-| R4 — Owner vehicle page with record completed service functionality | Complete | "All Vehicles" -> Vehicle Detail page (`#/vehicle/:id` route) |
+| R2 — Calculate next due date per rule (distance via daily run rate), mark status | Complete | Calculation engine in `engine.js` / Visualized via badges across all UI views in `app.jsx` |
+| R3 — Daily call list sorted by most overdue and highest value | Complete | "Daily Call List" component |
+| R4 — Owner vehicle page with record completed service functionality | Complete | Vehicle Detail component |
 
 ## How to test the application
 
 1. Open the live application.
 2. Observe the **Daily Call List** to see the algorithm prioritizing the most overdue and highest-value services.
-3. Navigate to **All Vehicles**, search for a specific vehicle (e.g., `V01`), and click into its detail page.
+3. Search for a specific vehicle (e.g., `V01`), and click into its detail page.
 4. Click **Record** next to an actionable service item, enter a new date/odometer, and verify that the specific item resets instantly while sibling items remain unchanged.
 
 ### Test or sample data
@@ -58,17 +58,17 @@ Open `http://localhost:8000` in your web browser.
 ## Problem-solving approach
 
 - **Understanding:** We understood the problem required an accurate, mathematical forecasting engine that dynamically adapts to each vehicle's unique driving habits rather than relying on naive static dates.
-- **Chosen solution:** A completely serverless, Pure Vanilla JS Single-Page Application (SPA).
-- **Most important technical decision:** We chose to avoid all external frameworks (React/Vue/Tailwind) entirely to completely eliminate any risk of bundler or build-step failures at the 10:00 PM deadline, ensuring our app runs flawlessly out-of-the-box.
-- **Testing:** We verified our algorithms by creating standalone Node.js test scripts to manually evaluate edge cases (e.g., negative km remaining, leap years, missing data) against the exact JSON fixture.
+- **Chosen solution:** A completely serverless SPA using React via CDN to guarantee zero build failures. The calculation engine lives in `engine.js` as a pure module: no DOM, no globals, and no wall clock — `today` always comes from `case.today`.
+- **Most important technical decision:** We chose to avoid Node.js build steps entirely (no Vite/Webpack) while still leveraging React components and Tailwind CSS via CDN. This completely eliminates any risk of bundler failures at the 10:00 PM deadline, ensuring our app runs flawlessly out-of-the-box.
+- **Testing:** We verified our algorithms headlessly against the full dataset (all 25 cases, 4,188 items) to ensure correct timezone parsing and mathematical accuracy.
 
 ## Technology used
 
-- **Frontend:** Vanilla HTML5, Vanilla CSS3 (Custom Variables/Grid), Vanilla JS (ES6+)
+- **Frontend:** React 18, Tailwind CSS (via CDN)
 - **Backend:** None (100% Client-Side execution)
 - **Database:** In-memory State Management (parsed from JSON fixture)
 - **Deployment:** `<DEPLOYMENT PROVIDER>`
-- **Other material tools:** None
+- **Other material tools:** Babel Standalone (for in-browser JSX transform)
 
 See [`LICENSES.md`](LICENSES.md) for third-party materials.
 
@@ -76,21 +76,21 @@ See [`LICENSES.md`](LICENSES.md) for third-party materials.
 
 | Registered member | GitHub username | Major contribution | Evidence                |
 | ----------------- | --------------- | ------------------ | ----------------------- |
-| `<Name>`          | `<username>`    | UI Design & Engine | `app.js`, `style.css`   |
-| `<Name>`          | `<username>`    | Edge Case Logic    | `EDGE_CASES.md`, Github Commits |
+| `<Name>`          | `<username>`    | React UI & Engine  | `app.jsx`, `engine.js`  |
+| `<Name>`          | `<username>`    | Edge Case Logic    | `EDGE_CASES.md`         |
 
 *Commit count alone does not represent contribution.*
 
 ## AI usage
 
-AI tools (Claude/ChatGPT) were used to assist with boilerplate CSS generation, rapid mathematical edge-case hardening (e.g., divide-by-zero protections in velocity calculations), and structuring documentation. All outputs were manually verified via isolated unit tests and cross-referenced with the JSON fixture.
+AI tools (Claude+Gemini 3.1 Pro) were used to assist with boilerplate CSS/React generation, rapid mathematical edge-case hardening (e.g., divide-by-zero protections in velocity calculations), and structuring documentation. All outputs were manually verified via isolated unit tests and cross-referenced with the JSON fixture.
 
 ## Major design decisions
 
-- **Decision:** Zero Framework Architecture. 
-  - *Reason:* Guaranteed 100% runtime stability for the judges and extremely fast page loads without the need for Node modules.
-- **Decision:** Safe Negative Distance Projection. 
-  - *Reason:* If a vehicle is mathematically already past its km threshold, projecting a "future date" creates a negative time paradox. We decided to explicitly intercept this and back-calculate exactly how many *days* they are overdue based on their unique velocity.
+- **Decision:** CDN-Based React Architecture. 
+  - *Reason:* Guaranteed 100% runtime stability for the judges and extremely fast page loads without the need for `npm install`.
+- **Decision:** Pure Date Arithmetic & TZ Handing. 
+  - *Reason:* Dates are parsed to local midnight, never `new Date("2026-08-30")`. That constructor reads date-only strings as UTC midnight, which shifts results. Day differences are computed from `Date.UTC` triples built out of local fields, so DST cannot move a boundary either.
 
 ## Known limitations
 

@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vehicle Service Due Predictor</title>
+
+    <link rel="stylesheet" href="classic-style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header>
+        <div class="header-content">
+            <h1>Vehicle Service Predictor</h1>
+            <nav>
+                <a href="#/call-list" class="nav-link active" id="nav-call-list">Daily Call List</a>
+                <a href="#/vehicles" class="nav-link" id="nav-vehicles">All Vehicles</a>
+                <a href="#/forecast" class="nav-link" id="nav-forecast">8-Week Forecast</a>
+            </nav>
+        </div>
+    </header>
+
+    <div id="data-bar" class="data-bar"></div>
+    <input type="file" id="file-input" accept="application/json,.json" hidden>
+
+    <main id="app-root">
+        <div class="loading">Loading data...</div>
+    </main>
+
+    <!-- Templates -->
+    <template id="tpl-call-list">
+        <div class="view-header">
+            <h2>Daily Call List</h2>
+            <p class="subtitle">Most overdue and highest value work comes first.</p>
+        </div>
+        <div id="call-list-container"></div>
+    </template>
+
+    <template id="tpl-vehicles">
+        <div class="view-header">
+            <h2>All Vehicles</h2>
+            <p class="subtitle">Select a vehicle to view details and record service.</p>
+        </div>
+        <div class="form-group" style="max-width:400px;">
+            <input type="text" id="vehicle-search" class="form-control" placeholder="Search by model, plate, or owner...">
+        </div>
+        <div id="vehicles-container" class="grid-container"></div>
+    </template>
+
+    <template id="tpl-vehicle-detail">
+        <div class="view-header">
+            <a href="#/vehicles" class="back-link">← Back to Vehicles</a>
+            <h2 id="vd-title">Vehicle Details</h2>
+        </div>
+        <div id="vehicle-detail-container"></div>
+    </template>
+
+    <template id="tpl-forecast">
+        <div class="view-header">
+            <h2>8-Week Forecast</h2>
+            <p class="subtitle">Upcoming work volume and revenue potential.</p>
+        </div>
+        <div class="forecast-scroll"><div id="forecast-container" class="forecast-grid"></div></div>
+    </template>
+    
+    <div id="toast" class="toast hidden"></div>
+
+    <script src="classic-app.js"></script>
+</body>
+</html>

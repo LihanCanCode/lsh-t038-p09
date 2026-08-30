@@ -1,67 +1,40 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vehicle Service Due Predictor</title>
-
-    <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vehicle Service Due Predictor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = {
+  theme: { extend: {
+    fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] },
+    colors: { ink: { 900:'#0b1020', 800:'#131a2e', 700:'#1e2740' } },
+    boxShadow: { card: '0 1px 2px rgba(16,24,40,.06), 0 1px 3px rgba(16,24,40,.1)',
+                 lift: '0 8px 24px -6px rgba(16,24,40,.12), 0 2px 6px rgba(16,24,40,.06)' }
+  } }
+};
+</script>
+<style>
+  body { font-feature-settings: 'cv02','cv03','cv04','tnum'; }
+  .tnum { font-variant-numeric: tabular-nums; }
+  ::-webkit-scrollbar { height: 8px; width: 8px; }
+  ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+  @media print { .no-print { display: none !important; } }
+</style>
 </head>
-<body>
-    <header>
-        <div class="header-content">
-            <h1>Vehicle Service Predictor</h1>
-            <nav>
-                <a href="#/call-list" class="nav-link active" id="nav-call-list">Daily Call List</a>
-                <a href="#/vehicles" class="nav-link" id="nav-vehicles">All Vehicles</a>
-                <a href="#/forecast" class="nav-link" id="nav-forecast">8-Week Forecast</a>
-            </nav>
-        </div>
-    </header>
+<body class="bg-slate-50 text-slate-900 antialiased">
+  <div id="root">
+    <div class="min-h-screen flex items-center justify-center text-slate-500 text-sm">Loading…</div>
+  </div>
 
-    <main id="app-root">
-        <div class="loading">Loading data...</div>
-    </main>
-
-    <!-- Templates -->
-    <template id="tpl-call-list">
-        <div class="view-header">
-            <h2>Daily Call List</h2>
-            <p class="subtitle">Most overdue and highest value work comes first.</p>
-        </div>
-        <div id="call-list-container"></div>
-    </template>
-
-    <template id="tpl-vehicles">
-        <div class="view-header">
-            <h2>All Vehicles</h2>
-            <p class="subtitle">Select a vehicle to view details and record service.</p>
-        </div>
-        <div class="form-group" style="max-width:400px;">
-            <input type="text" id="vehicle-search" class="form-control" placeholder="Search by model, plate, or owner...">
-        </div>
-        <div id="vehicles-container" class="grid-container"></div>
-    </template>
-
-    <template id="tpl-vehicle-detail">
-        <div class="view-header">
-            <a href="#/vehicles" class="back-link">← Back to Vehicles</a>
-            <h2 id="vd-title">Vehicle Details</h2>
-        </div>
-        <div id="vehicle-detail-container"></div>
-    </template>
-
-    <template id="tpl-forecast">
-        <div class="view-header">
-            <h2>8-Week Forecast</h2>
-            <p class="subtitle">Upcoming work volume and revenue potential.</p>
-        </div>
-        <div id="forecast-container" class="forecast-grid"></div>
-    </template>
-    
-    <div id="toast" class="toast hidden"></div>
-
-    <script src="app.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.26.4/babel.min.js"></script>
+  <script src="engine.js"></script>
+  <script type="text/babel" src="app.jsx" data-presets="react"></script>
 </body>
 </html>
