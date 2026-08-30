@@ -732,7 +732,13 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen font-sans">
+    <div className="min-h-screen font-sans relative z-0">
+      {(route !== '#' && route !== '') && (
+        <div className="pointer-events-none fixed inset-0 -z-10 h-full w-full overflow-hidden bg-slate-50">
+          <div className="absolute -top-[20%] -right-[10%] h-[70vw] w-[70vw] max-h-[800px] max-w-[800px] rounded-full bg-cyan-200/40 blur-[120px]" />
+          <div className="absolute -bottom-[20%] -left-[10%] h-[70vw] w-[70vw] max-h-[800px] max-w-[800px] rounded-full bg-indigo-200/40 blur-[120px]" />
+        </div>
+      )}
       <Header route={route} />
       <main className={route === '#' || route === '' ? 'w-full' : 'mx-auto max-w-[1400px] px-6 py-8 sm:py-12'}>
         {fatal ? (
