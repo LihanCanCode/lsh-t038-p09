@@ -1,19 +1,19 @@
 :root {
-    --bg-dark: #121212;
-    --bg-card: #1e1e1e;
-    --text-main: #f3f4f6;
-    --text-muted: #9ca3af;
-    --primary: #f59e0b;
-    --primary-hover: #d97706;
+    --bg-dark: #f8fafc;
+    --bg-card: #ffffff;
+    --text-main: #0f172a;
+    --text-muted: #64748b;
+    --primary: #2563eb;
+    --primary-hover: #1d4ed8;
     --danger: #ef4444;
     --danger-bg: rgba(239, 68, 68, 0.1);
-    --warning: #eab308;
-    --warning-bg: rgba(234, 179, 8, 0.1);
-    --success: #22c55e;
-    --success-bg: rgba(34, 197, 94, 0.1);
-    --border: #333333;
-    --unknown: #6b7280;
-    --unknown-bg: rgba(107, 114, 128, 0.1);
+    --warning: #f59e0b;
+    --warning-bg: rgba(245, 158, 11, 0.1);
+    --success: #10b981;
+    --success-bg: rgba(16, 185, 129, 0.1);
+    --border: #e2e8f0;
+    --unknown: #94a3b8;
+    --unknown-bg: rgba(148, 163, 184, 0.1);
 }
 
 * {
@@ -127,7 +127,7 @@ th, td {
 }
 
 th {
-    background-color: rgba(0, 0, 0, 0.2);
+    background-color: var(--bg-dark);
     color: var(--text-muted);
     font-weight: 500;
     font-size: 0.875rem;
@@ -168,7 +168,7 @@ tr:last-child td {
 
 .btn {
     background: var(--primary);
-    color: #121212;
+    color: #ffffff;
     border: none;
     padding: 0.5rem 1rem;
     border-radius: 4px;
@@ -180,7 +180,7 @@ tr:last-child td {
 .btn:hover { background: var(--primary-hover); }
 .btn-small { padding: 0.25rem 0.5rem; font-size: 0.8rem; }
 .btn-secondary { background: var(--border); color: var(--text-main); }
-.btn-secondary:hover { background: #444; }
+.btn-secondary:hover { background: #cbd5e1; }
 
 /* Grid for Vehicles */
 .grid-container {
@@ -226,7 +226,7 @@ tr:last-child td {
 /* Modals / Forms */
 .form-group { margin-bottom: 1rem; }
 .form-group label { display: block; margin-bottom: 0.5rem; color: var(--text-muted); }
-.form-control { width: 100%; padding: 0.75rem; background: #121212; border: 1px solid var(--border); color: var(--text-main); border-radius: 4px; font-family: inherit; }
+.form-control { width: 100%; padding: 0.75rem; background: var(--bg-dark); border: 1px solid var(--border); color: var(--text-main); border-radius: 4px; font-family: inherit; }
 .form-control:focus { outline: none; border-color: var(--primary); }
 
 .flex-row { display: flex; gap: 1rem; align-items: flex-end; margin-bottom: 1rem; }
@@ -260,7 +260,7 @@ tr:last-child td {
     bottom: 2rem;
     right: 2rem;
     background: var(--success);
-    color: #121212;
+    color: #ffffff;
     padding: 1rem 1.5rem;
     border-radius: 4px;
     font-weight: 600;
@@ -279,4 +279,4 @@ tr:last-child td {
 
 /* Reminder Section */
 .reminder-box { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 1.5rem; margin-bottom: 1rem; }
-.reminder-text { font-family: monospace; background: #121212; padding: 1rem; border-radius: 4px; margin: 1rem 0; white-space: pre-wrap; }
+.reminder-text { font-family: monospace; background: var(--bg-dark); padding: 1rem; border-radius: 4px; margin: 1rem 0; white-space: pre-wrap; }
