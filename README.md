@@ -7,14 +7,14 @@ Solution for **LofiStack Hackathon 2026 — P09**
 - **Team:** `Mrittu Machines`
 - **Team ID:** `LSH26-T038`
 - **Problem:** `P09 — Vehicle Service Due Predictor`
-- **Live application:** `<https://example.com>`
+- **Live application:** <https://lsh-t038-p09.vercel.app/>
 - **Demo video:** `<Optional link, maximum three minutes>`
 
 > Judges will evaluate only the exact commit SHA entered in the Final Submission Form.
 
 ## Solution summary
 
-The application is a smart predictive engine for car workshops in Dhaka to actively manage customer vehicles. It dynamically forecasts service due dates by analyzing a vehicle's historical daily running rate, automatically prioritizing the most overdue and highest-value follow-up calls into a daily dashboard.
+The application is a smart predictive engine for car workshops in Dhaka to actively manage customer vehicles. It dynamically forecasts service due dates by analyzing a vehicle's historical daily running rate, automatically prioritizing the most overdue and highest-value follow-up calls into a daily dashboard. It features a custom-built Premium Glassmorphic UI on the landing page and global routes, powered by Framer Motion for smooth interactions.
 
 ## Requirements
 
@@ -40,35 +40,32 @@ The application automatically fetches the provided `P09_vehicle_service_public.j
 
 ### Requirements
 
-- A basic local web server (Python, Node.js `serve`, or VS Code Live Server)
-- No build tools or databases required.
+- Node.js (v18+)
 
 ### Setup
 
 ```bash
 git clone https://github.com/LihanCanCode/lsh-t038-p09.git
 cd lsh-t038-p09
-# Using Python
-python -m http.server 8000
-# OR using Node.js
-npx serve
+npm install
+npm run dev
 ```
-Open `http://localhost:8000` in your web browser.
+Open `http://localhost:5173` in your web browser.
 
 ## Problem-solving approach
 
 - **Understanding:** We understood the problem required an accurate, mathematical forecasting engine that dynamically adapts to each vehicle's unique driving habits rather than relying on naive static dates.
-- **Chosen solution:** A completely serverless SPA using React via CDN to guarantee zero build failures. The calculation engine lives in `engine.js` as a pure module: no DOM, no globals, and no wall clock — `today` always comes from `case.today`.
-- **Most important technical decision:** We chose to avoid Node.js build steps entirely (no Vite/Webpack) while still leveraging React components and Tailwind CSS via CDN. This completely eliminates any risk of bundler failures at the 10:00 PM deadline, ensuring our app runs flawlessly out-of-the-box.
+- **Chosen solution:** A React Single Page Application built with Vite. The calculation engine lives in `engine.js` as a pure module: no DOM, no globals, and no wall clock — `today` always comes from `case.today`.
+- **Most important technical decision:** We chose to overhaul the UI with a "Premium Glassmorphic" design system utilizing Tailwind CSS and Framer Motion to provide a world-class SaaS aesthetic while maintaining rigorous mathematical accuracy underneath.
 - **Testing:** We verified our algorithms headlessly against the full dataset (all 25 cases, 4,188 items) to ensure correct timezone parsing and mathematical accuracy.
 
 ## Technology used
 
-- **Frontend:** React 18, Tailwind CSS (via CDN)
+- **Frontend:** React 19, Vite, Tailwind CSS, Framer Motion
 - **Backend:** None (100% Client-Side execution)
 - **Database:** In-memory State Management (parsed from JSON fixture)
-- **Deployment:** `<DEPLOYMENT PROVIDER>`
-- **Other material tools:** Babel Standalone (for in-browser JSX transform)
+- **Deployment:** Vercel
+- **Other material tools:** N/A
 
 See [`LICENSES.md`](LICENSES.md) for third-party materials.
 
@@ -76,8 +73,8 @@ See [`LICENSES.md`](LICENSES.md) for third-party materials.
 
 | Registered member | GitHub username | Major contribution | Evidence                |
 | ----------------- | --------------- | ------------------ | ----------------------- |
-| `<Name>`          | `<username>`    | React UI & Engine  | `app.jsx`, `engine.js`  |
-| `<Name>`          | `<username>`    | Edge Case Logic    | `EDGE_CASES.md`         |
+| Lihan             | LihanCanCode    | React UI, Vite Migration, AI Dev | `app.jsx`, UI Overhaul  |
+| Istu              | IsTu25          | Edge Case Logic, Engine          | `engine.js`             |
 
 *Commit count alone does not represent contribution.*
 
@@ -87,8 +84,8 @@ AI tools (Claude+Gemini 3.1 Pro) were used to assist with boilerplate CSS/React 
 
 ## Major design decisions
 
-- **Decision:** CDN-Based React Architecture. 
-  - *Reason:* Guaranteed 100% runtime stability for the judges and extremely fast page loads without the need for `npm install`.
+- **Decision:** Vite + React Architecture. 
+  - *Reason:* Required to robustly support advanced animation libraries (Framer Motion) and complex CSS imports for the Premium UI overhaul.
 - **Decision:** Pure Date Arithmetic & TZ Handing. 
   - *Reason:* Dates are parsed to local midnight, never `new Date("2026-08-30")`. That constructor reads date-only strings as UTC midnight, which shifts results. Day differences are computed from `Date.UTC` triples built out of local fields, so DST cannot move a boundary either.
 
