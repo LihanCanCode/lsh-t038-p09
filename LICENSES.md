@@ -1,41 +1,24 @@
-# Licenses
+# Third-Party Material and AI Disclosure
 
-All third-party code is MIT or OFL. **No AGPL, GPL, SSPL or non-commercial-licensed material is
-used anywhere in this project.**
+List material frameworks, libraries, starters, templates, UI kits, fonts, icons and assets used in this repository.
 
-## Runtime libraries
-
-Every library is loaded from a CDN at runtime; none is vendored into this repository, and there is
-no `package.json`, `node_modules`, or build step.
-
-| Library | Version | Purpose | License |
+| Name | Version or source URL | Licence | Used for |
 |---|---|---|---|
-| [React](https://react.dev) | 18.3.1 | UI component rendering | [MIT](https://github.com/facebook/react/blob/main/LICENSE) |
-| [React DOM](https://react.dev) | 18.3.1 | DOM renderer for React | [MIT](https://github.com/facebook/react/blob/main/LICENSE) |
-| [Babel Standalone](https://babeljs.io) | 7.26.4 | In-browser JSX transform (no build step) | [MIT](https://github.com/babel/babel/blob/main/LICENSE) |
-| [Tailwind CSS](https://tailwindcss.com) (Play CDN) | 3.x | Utility-first styling | [MIT](https://github.com/tailwindlabs/tailwindcss/blob/master/LICENSE) |
+| React | v19.2.8 (npm) | MIT | Core UI Framework |
+| Vite | v8.2.2 (npm) | MIT | Development Server and Build Tool |
+| Tailwind CSS | cdn.tailwindcss.com | MIT | Application Styling |
+| Framer Motion | v13.1.1 (npm) | MIT | UI Animations and Transitions |
+| Google Fonts (Inter) | fonts.googleapis.com | SIL OFL 1.1 | Typography |
+| SVG Icons | Embedded in `app.jsx` | MIT | Feature/UI indicators |
 
-React and React DOM are served from cdnjs; Tailwind from its official Play CDN.
+## AI tools
 
-## Fonts
+List each AI tool in `evaluation-manifest.json`, what it was used for and how the output was verified. Write `None` if no AI tool was used.
 
-| Asset | Source | License |
-|---|---|---|
-| Inter | [Google Fonts](https://fonts.google.com/specimen/Inter) — linked at runtime, not vendored | [SIL Open Font License 1.1](https://openfontlicense.org/) |
+- **Gemini Pro 3.1**: Used for rapid UI iteration, implementing the Premium Glassmorphic design, and debugging Vite build/deployment issues. Output verified by local testing and manual code review.
+- **Claude Code**: Used for boilerplate generation and core mathematical logic implementation (e.g., `engine.js` algorithms). Output verified via local headless testing against the JSON fixture.
+- **Manus AI**: Used for architectural planning and structuring documentation (READMEs, EDGE_CASES, etc.). Output verified by team review.
 
-The stylesheet falls back to the system sans-serif stack if the font request fails.
+## Original-work statement
 
-## First-party code
-
-`engine.js` (all service-due calculation), `app.jsx` (all UI components), and the `classic.*`
-fallback build are written from scratch by the team. No template, boilerplate or starter kit was
-used — see `Events.md`.
-
-## Data
-
-`P09_vehicle_service_public.json` is the fixture supplied by the organisers for problem P09. It is
-included unmodified and is not the team's work.
-
-## Icons and images
-
-None. All status indicators are CSS-styled text and coloured dots.
+Everything not declared in this file or `EVENT.md` was created by the registered team during the event window.
