@@ -33,9 +33,9 @@
   },
   "team_members": [
     {
-      "registered_name": "Lihan",
+      "registered_name": "Tahsan Ferdous Lihan",
       "github_username": "LihanCanCode",
-      "major_contribution": "React UI, Vite Migration, AI Dev",
+      "major_contribution": "Lead front-end development, orchestrated the migration to Vite for robust build tooling, designed the Premium Glassmorphic UI using Tailwind and Framer Motion, and managed AI-assisted integrations.",
       "evidence_paths_or_commits": [
         "app.jsx",
         "README.md",
@@ -43,9 +43,9 @@
       ]
     },
     {
-      "registered_name": "Istu",
+      "registered_name": "Isfak Iqbal Chowdhury",
       "github_username": "IsTu25",
-      "major_contribution": "Edge Case Logic, Engine",
+      "major_contribution": "Architected the core prediction engine in JavaScript, implemented robust timezone and date arithmetic, and hardened algorithms against edge cases like missing data and negative running rates.",
       "evidence_paths_or_commits": [
         "engine.js",
         "EDGE_CASES.md"
