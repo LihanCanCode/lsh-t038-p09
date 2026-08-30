@@ -78,10 +78,13 @@ across both problems) against ~2.5 of bonus given up. Not close.
 - [x] **All `alert()` calls removed** — every rejection is an inline message naming the value
 > "Edge cases handled without being asked" is the Exceptional band's wording.
 
-### T6 · Docs — **10 min** 🟡 DEMO & DOCS (6 + 4 + 2 marks)
-- [ ] README: fix the stale `p09-app` directory reference, add the live URL, state what is mocked
-- [ ] LICENSES.md: confirm Inter/OFL entry is accurate and complete
-- [ ] Final `track.md` + `EDGE_CASES.md` reconciled with what actually shipped
+### T6 · Docs — ✅ **DONE** 🟡 DEMO & DOCS (6 + 4 + 2 marks)
+- [x] README rewritten: what it does · how to run · **what is mocked** · what is next, plus the
+      live URL and the verified status table. Stale `p09-app` path fixed.
+- [x] LICENSES.md: explicit "no third-party code", Inter/OFL with why it is linked not vendored,
+      fixture attribution, and an explicit no-AGPL/GPL/SSPL compliance line
+- [x] EDGE_CASES.md rewritten against measured behaviour — every claim the old version made that
+      testing disproved is now marked **[FIXED]** with the reason it was wrong
 
 ### T7 · Demo video — **10 min** 🔴 8 MARKS, HIGHEST RATE ON THE BOARD
 - [ ] 60+ seconds, screen recording of the **live URL**
@@ -113,8 +116,10 @@ across both problems) against ~2.5 of bonus given up. Not close.
 
 ## Log
 - 20:12 — clock check: 107 min left, no live URL, track written, starting T1
-- 20:20 — T1 pushed, Pages needs one click from the user; started T2
-- 20:38 — **T2 + T4 done and verified headlessly.** Engine now TZ-invariant and matches
+- 20:15 — T1 pushed, Pages needs one click from the user; started T2
+- 20:18 — **T2 + T4 done and verified headlessly.** Engine now TZ-invariant and matches
   PLAN.md's golden numbers exactly.
-- 20:42 — **T3 + T5 done.** Stacked mobile cards, empty states, inline validation, zero
-  horizontal overflow confirmed by measurement. Remaining: T6 docs, T7 video, T1 Pages click.
+- 20:22 — **T3 + T5 done.** Stacked mobile cards, empty states, inline validation, zero
+  horizontal overflow confirmed by measurement.
+- 20:28 — **T6 done.** README / LICENSES / EDGE_CASES all rewritten against measured behaviour.
+- 20:28 — ⚠️ Pages still returning 404. **T1 and T7 are the only things left, both need the user.**
