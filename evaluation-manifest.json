@@ -1,0 +1,81 @@
+{
+  "team_id": "LSH26-T038",
+  "problem_id": "P09",
+  "repository_name": "lsh-t038-p09",
+  "live_url": "https://lsh-t038-p09.vercel.app/",
+  "demo_video_url_optional": "",
+  "event_start_code": "LSH26-8490-C900",
+  "repository_created_before_release": false,
+  "pre_event_materials": [],
+  "sample_data": {
+    "loads_published_fixture": true,
+    "method": "automatic fetch / local JSON",
+    "reset_instructions": "Refresh the browser page to clear the in-memory state and reload the base JSON fixture."
+  },
+  "problem_solving_method": "A completely serverless SPA utilizing Vite and React, running 100% on the client to calculate vehicle service dates dynamically by analyzing daily run rate history, ensuring zero server-side build failures.",
+  "requirements": {
+    "R1": {
+      "status": "complete",
+      "evidence": "Pre-loaded via P09_vehicle_service_public.json and parsed into memory in app.jsx"
+    },
+    "R2": {
+      "status": "complete",
+      "evidence": "engine.js calculation engine and visualised across all UI views in app.jsx"
+    },
+    "R3": {
+      "status": "complete",
+      "evidence": "Daily Call List UI component on the landing page"
+    },
+    "R4": {
+      "status": "complete",
+      "evidence": "Vehicle Detail UI component at the #/vehicle/:id route"
+    }
+  },
+  "team_members": [
+    {
+      "registered_name": "Lihan",
+      "github_username": "LihanCanCode",
+      "major_contribution": "React UI, Vite Migration, AI Dev",
+      "evidence_paths_or_commits": [
+        "app.jsx",
+        "README.md",
+        "LICENSES.md"
+      ]
+    },
+    {
+      "registered_name": "Istu",
+      "github_username": "IsTu25",
+      "major_contribution": "Edge Case Logic, Engine",
+      "evidence_paths_or_commits": [
+        "engine.js",
+        "EDGE_CASES.md"
+      ]
+    }
+  ],
+  "major_design_decisions": [
+    "Vite + React Architecture to robustly support advanced animation libraries (Framer Motion) and complex CSS imports for the Premium Glassmorphic UI overhaul.",
+    "Pure Date Arithmetic & TZ Handling. Dates are parsed to local midnight rather than UTC constructors, preventing daylight saving shifts from affecting due dates."
+  ],
+  "known_limitations": [
+    "The application uses in-memory state mapping. Recorded services or odometer updates will successfully update the UI dynamically but will not persist if the browser window is refreshed."
+  ],
+  "ai_tools_used": [
+    {
+      "tool": "Gemini Pro 3.1",
+      "used_for": "Rapid UI iteration, Premium Glassmorphic design, debugging Vite build/deployment issues.",
+      "how_output_was_verified": "Local testing and manual code review."
+    },
+    {
+      "tool": "Claude Code",
+      "used_for": "Boilerplate generation and core mathematical logic implementation.",
+      "how_output_was_verified": "Local headless testing against the JSON fixture."
+    },
+    {
+      "tool": "Manus AI",
+      "used_for": "Architectural planning and structuring documentation.",
+      "how_output_was_verified": "Team review and validation."
+    }
+  ],
+  "licenses_file": "LICENSES.md",
+  "declaration": "The information above is complete and truthful to the best of the team's knowledge."
+}
