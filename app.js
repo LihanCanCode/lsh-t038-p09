@@ -674,7 +674,10 @@ function activateCase(index) {
 }
 
 // Validates a parsed JSON payload and makes it the active dataset.
-function applyDataset(json, sourceLabel) {
+// goHome is for a *user-initiated* dataset change, where the vehicle currently on screen may not
+// exist in the new file. On first load it must stay false, or deep links and refreshes get
+// bounced to the call list.
+function applyDataset(json, sourceLabel, goHome) {
     const cases = normaliseCases(json);
     if (!cases.length) throw new Error('The file contains an empty "cases" array.');
 
@@ -685,8 +688,11 @@ function applyDataset(json, sourceLabel) {
     STATE.source = sourceLabel;
     activateCase(0);
 
-    if (!window.location.hash || window.location.hash === '#/call-list') router();
-    else window.location.hash = '#/call-list';
+    if (goHome && window.location.hash && window.location.hash !== '#/call-list') {
+        window.location.hash = '#/call-list';   // fires hashchange, which routes
+    } else {
+        router();                                // honour whatever route was asked for
+    }
     return cases.length;
 }
 
@@ -694,6 +700,16 @@ function renderDataBar() {
     const bar = document.getElementById('data-bar');
     if (!bar) return;
     const c = STATE.data;
+    if (!c) {   // no dataset yet (bundled fetch failed) — still offer the upload control
+        bar.innerHTML = `<div class="data-bar-inner">
+            <div class="data-meta"><span class="data-source">No dataset loaded</span>
+            <span class="data-facts">Load a JSON file to begin</span></div>
+            <div class="data-actions"><button class="btn btn-small" id="btn-upload">Load JSON</button></div>
+          </div><div class="field-error" id="data-err"></div>`;
+        document.getElementById('btn-upload').addEventListener('click',
+            () => document.getElementById('file-input').click());
+        return;
+    }
     const options = STATE.cases.map((x, i) =>
         `<option value="${i}"${i === STATE.caseIndex ? ' selected' : ''}>${x.case_id || 'Case ' + (i + 1)}</option>`).join('');
 
@@ -716,7 +732,7 @@ function renderDataBar() {
     if (sel) sel.addEventListener('change', e => { activateCase(Number(e.target.value)); router(); });
     document.getElementById('btn-upload').addEventListener('click', () => document.getElementById('file-input').click());
     const reset = document.getElementById('btn-reset-data');
-    if (reset) reset.addEventListener('click', () => loadBundled());
+    if (reset) reset.addEventListener('click', () => loadBundled(true).catch(e => setFieldError('data-err', e.message)));
 
     if (STATE.warnings.length) {
         setFieldError('data-err', `${STATE.warnings.length} data issue(s): ${STATE.warnings.slice(0, 3).join(' ')}`);
@@ -737,7 +753,7 @@ function handleFile(file) {
             return setFieldError('data-err', `That file is not valid JSON — ${err.message}`);
         }
         try {
-            const n = applyDataset(json, file.name);
+            const n = applyDataset(json, file.name, true);
             showToast(`Loaded ${file.name}${n > 1 ? ` (${n} cases)` : ''}`);
         } catch (err) {
             setFieldError('data-err', err.message);
@@ -749,10 +765,10 @@ function handleFile(file) {
 
 const DEFAULT_SOURCE = 'P09_vehicle_service_public.json (bundled)';
 
-async function loadBundled() {
+async function loadBundled(goHome) {
     const res = await fetch('P09_vehicle_service_public.json');
     if (!res.ok) throw new Error('Failed to load the bundled JSON file.');
-    applyDataset(await res.json(), DEFAULT_SOURCE);
+    applyDataset(await res.json(), DEFAULT_SOURCE, goHome);
 }
 
 // Init
@@ -775,7 +791,7 @@ async function init() {
     window.addEventListener('hashchange', router);
 
     try {
-        await loadBundled();
+        await loadBundled(false);
     } catch (e) {
         document.getElementById('app-root').innerHTML = `<div class="error" style="text-align:center; padding:3rem;">
             <h2>Could not load the bundled dataset</h2>
