@@ -1,0 +1,93 @@
+{
+  "team_id": "LSH26-T038",
+  "problem_id": "P09",
+  "repository_name": "lsh26-t038-p09",
+  "live_url": "<FILL: https://lihancancode.github.io/lsh26-t038-p09/ once GitHub Pages is enabled>",
+  "demo_video_url_optional": "",
+  "event_start_code": "LSH26-8490-C900",
+  "repository_created_before_release": false,
+  "pre_event_materials": [],
+  "sample_data": {
+    "loads_published_fixture": true,
+    "method": "bundled on load, plus file upload and drag-and-drop",
+    "reset_instructions": "The published fixture P09_vehicle_service_public.json is bundled and loads automatically when the page opens, so no action is needed to see the sample data. To test a different dataset, click 'Load JSON' in the bar under the header, or drag a .json file anywhere onto the page; it accepts an object with a 'cases' array, a bare array of cases, or a single case object. The case selector beside it switches between all 25 cases in the file. To restore the original data, click 'Use bundled' (shown whenever an uploaded file is active) or simply reload the page: all edits are held in memory for the session only and never overwrite the bundled file."
+  },
+  "problem_solving_method": "We started from the data rather than the screens. Before writing any interface code we ran the published fixture through a script to establish what was actually in it - 25 cases, 42 vehicles and 27 owners each, 4,188 service items, three rule types - and to find the cases that would break a naive implementation. That audit drove the design: it showed that period-based items form a standing backlog (median 115 days overdue) which would otherwise dominate the call list forever, that 149 distance items carry a placeholder odometer value, and that duplicate owner names occur in every case so nothing may be keyed on a name. We then built the calculation engine first, as a pure module with no DOM and no wall clock, and verified it against fixed expected numbers before writing a single component. The interface was built on top of an engine we already trusted.",
+  "requirements": {
+    "R1": {
+      "status": "complete",
+      "evidence": "P09_vehicle_service_public.json - 42 vehicles and 27 owners per case, each vehicle carrying 3 to 5 service items across all three rules (fixed_date for insurance/fitness/tax token/battery warranty, period_months for engine oil/air filter/AC service/coolant, distance_km for brake pads/tyres/timing belt/spark plugs), plus 2 to 4 odometer readings and past service history. Visible on the Vehicles route (#/vehicles) and on any vehicle page. The engine is not hardcoded to this file: 'Load JSON' accepts any dataset of the same shape."
+    },
+    "R2": {
+      "status": "complete",
+      "evidence": "engine.js - calculateItemDue() computes a next due date per rule: fixed_date reads the literal expiry; period_months adds every_months to the last service date with correct month-end clamping (2026-08-31 + 6 gives 2027-02-28, not 2027-03-03); distance_km adds every_km to the last service odometer and converts the remaining distance into a date using getDailyKm(), which derives that vehicle's own km/day from its own odometer readings - never a shared interval. Each item is then classified overdue / due soon (within 14 days) / fine. Verified across all 25 cases: 1,183 overdue, 432 due soon, 2,573 fine of 4,188 items; PUB-01 gives 45 / 16 / 104. Rates in this data range from 13.45 to 90.19 km/day, so two identical cars are called at different times."
+    },
+    "R3": {
+      "status": "complete",
+      "evidence": "Route #/call-list, built by buildCallList() in engine.js. Shows the owner and phone number, the vehicle, every item that is due, and a plain-language reason per item naming the rule that produced it - for example '19 days overdue - 986 km past due at 51.9 km/day' or 'Last done 2026-01-17, every 3 months'. The sort is explicit and stated in the interface: vehicles with any overdue item rank above due-soon-only ones, ordered by the worst item's days overdue, then by total value, then by owner.id as a final deterministic tie-break (never by name, because duplicate owner names occur in every case). Vehicles whose overdue work is entirely older than 90 days are tagged 'Backlog' so a standing backlog reads differently from work that has just come due."
+    },
+    "R4": {
+      "status": "complete",
+      "evidence": "Route #/vehicle/:id - owner, current odometer, the vehicle's own daily running rate, then every service item with its rule, next due date, status and cost, followed by the full service history. 'Record' opens a form that appends one history row for that item only. Verified in a headless browser: recording the Battery warranty renewal on V01 moved it from 'overdue by 5 days' to 'fine, due in 365 days', added a history row, and left all four sibling items at exactly their previous status and day counts. For fixed_date items the form requires a New due date, because the schema stores no renewal period and the issuing authority - not an algorithm - decides when insurance or a fitness certificate next expires; without it such an item could never leave 'overdue'."
+    },
+    "bonus": {
+      "eight_week_forecast": {
+        "status": "complete",
+        "evidence": "Route #/forecast - buildForecast() in engine.js buckets every dated item by week. Bucketing is by date, not by status, which is what makes weeks 3 to 8 non-zero. PUB-01 gives [467800, 121700, 111500, 69800, 53500, 10200, 28700, 10800] taka. The first bar carries all overdue work plus the next seven days, so it is coloured and labelled apart rather than being mistaken for one week of demand."
+      },
+      "odometer_updates_estimates": {
+        "status": "complete",
+        "evidence": "Vehicle page - entering a new reading appends it (or replaces the same-dated one) and every distance-based item on that vehicle re-projects immediately; period and fixed-date items are untouched. Rejects a decrease, an unchanged value and non-numeric input, each with an inline message naming the current reading."
+      },
+      "copy_ready_reminder": {
+        "status": "complete",
+        "evidence": "'Copy reminder' on each call-list row writes a plain-text message to the clipboard naming the owner, the vehicle and plate, each due item with its overdue days or days remaining and its cost, and the estimated total."
+      }
+    }
+  },
+  "team_members": [
+    {
+      "registered_name": "<FILL: registered name exactly as on the registration form>",
+      "github_username": "LihanCanCode",
+      "major_contribution": "<FILL: this member's major contribution>",
+      "evidence_paths_or_commits": [
+        "engine.js",
+        "app.jsx"
+      ]
+    },
+    {
+      "registered_name": "<FILL: add one entry per registered member; delete this block if the team has only one>",
+      "github_username": "<FILL: GitHub username declared on the GitHub Information Form>",
+      "major_contribution": "<FILL>",
+      "evidence_paths_or_commits": []
+    }
+  ],
+  "major_design_decisions": [
+    "The calculation engine lives in engine.js as a pure module - no DOM, no globals, and no wall clock, with 'today' always passed in from case.today. This let us unit-test every rule headlessly in Node before any interface existed, and it means the same engine drives both the React build and the fallback build.",
+    "Date-only strings are parsed to local midnight with an explicit new Date(y, m-1, d) rather than new Date(string). The obvious constructor parses '2026-08-30' as UTC midnight, which combined with local getters shifted every result by a day west of UTC: the same data gave 45 overdue items in Dhaka and 46 in New York. Day differences are computed from Date.UTC triples built out of local fields so daylight saving cannot move a boundary either.",
+    "addMonths clamps to the last day of the target month instead of overflowing. Plain setMonth turns 2026-08-31 + 6 months into 2027-03-03; 113 of the 1,560 period-based history records fall on the 29th to 31st, so this was a live defect rather than a theoretical one.",
+    "The call list's final tie-break is owner.id, never owner.name. Duplicate owner names occur in every case in the fixture - PUB-01 has two people called Tanvir Chowdhury and PUB-03 has three called Rina Ali - so a name-based tie-break leaves their relative order undefined between renders.",
+    "An item with no computable due date is not filed as 'fine'. It is carried onto the call list in its own group, ranked below everything with a real date and badged 'needs review', because silently classifying unmeasured work as fine hides it from the workshop entirely.",
+    "A vehicle is tagged 'Backlog' only when every overdue item on it is more than 90 days old, deliberately not when any item is. Period-based items are a standing backlog with a median of 115 days overdue, so without the distinction the same names sit at the top of the list every morning; but a vehicle with one 220-day item beside one 12-day item still has a fresh problem and must not be muted.",
+    "No build step. React, Babel and Tailwind load from public CDNs and the repository is served exactly as it sits, so a judge can clone it and open it behind any static file server with nothing to install or compile.",
+    "classic.html is a complete zero-dependency vanilla build of the same application, kept as a fallback in case the CDNs are unreachable when the deployment is checked."
+  ],
+  "known_limitations": [
+    "State is held in memory for the session. Recorded services and odometer updates survive navigation between routes but are lost on a page reload, which restores the bundled fixture. There is no persistence layer, no undo and no export.",
+    "The call list shows one row per vehicle rather than grouping by owner, so an owner with three vehicles that need attention appears three times. Grouping by owner would turn that into a single phone call and is the first change we would make next.",
+    "A service history record whose km is 0 is taken literally as a baseline of zero. This value appears on 149 of the 1,050 distance-based items, and in at least 47 of them the record is dated after the vehicle's first odometer reading, where a real odometer could not read zero - so it is a placeholder rather than a measurement. Measured impact on the published fixture is one item misclassified across all 25 cases (PUB-09 / V28, Tyres). Treating it as a missing baseline is the correct fix and is not implemented.",
+    "The daily running rate uses the most recent usable pair of odometer readings rather than the full span of readings. Across the 713 vehicles with three or more readings the two methods differ by a median of 0.7%, so the effect is small, but the full-span figure uses more evidence.",
+    "There is no settings screen, so the 14-day due-soon window and the 90-day backlog threshold are constants in engine.js rather than adjustable by the workshop.",
+    "The automated checks described in this manifest were run from a local harness and are not committed to the repository, so a judge cannot re-run them from a clone.",
+    "The React build compiles JSX in the browser via Babel and depends on three public CDNs. If a CDN is unreachable the page will not render; classic.html is the dependency-free fallback for that case."
+  ],
+  "ai_tools_used": [
+    {
+      "tool": "Claude (Claude Code, Opus)",
+      "used_for": "Pair-programming the calculation engine and the React interface, auditing the published fixture to find edge cases, and drafting the repository documentation.",
+      "how_output_was_verified": "Nothing was accepted on trust. The engine was run over all 25 cases and asserted against fixed expected totals (1,183 / 432 / 2,573 across 4,188 items; 45 / 16 / 104 on PUB-01; a forecast of [467800, 121700, 111500, 69800, 53500, 10200, 28700, 10800] taka), and the same run was repeated under Asia/Dhaka, America/New_York and America/Los_Angeles to prove the result does not depend on the machine. 56 behavioural checks cover each rule, the status boundaries, every validation message and edge cases that do not occur in the published data - odometer rollback, orphaned history rows, malformed costs, single-reading vehicles. Interactive behaviour was driven in a real headless browser and asserted rather than eyeballed. That process caught real defects in AI-written code, including a date layer whose output changed with the machine's timezone, a Record button that silently did nothing for 40% of items, a route handler that redirected every deep link to the call list, and items with no computable date vanishing from the call list; each was fixed and re-verified."
+    }
+  ],
+  "licenses_file": "LICENSES.md",
+  "declaration": "The information above is complete and truthful to the best of the team's knowledge."
+}
