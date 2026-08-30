@@ -5,26 +5,56 @@ const STATE = {
     vehicleById: {}
 };
 
-// Utilities
+const DUE_SOON_DAYS = 14;      // an item within this many days of due is "due soon"
+const MAX_PROJECT_DAYS = 3650; // ceiling on a distance projection, so sort keys stay sane
+
+// Date utilities.
+// Every date in this dataset is date-only ("2026-08-30"). `new Date(str)` would parse those as
+// UTC midnight while the getters below read local fields, which shifts every result by a day in
+// any negative-offset timezone. So: parse to LOCAL midnight explicitly, and never round-trip
+// through toISOString() for display.
+function parseLocalDate(str) {
+    if (!str) return null;
+    const [y, m, d] = String(str).split('-').map(Number);
+    if (!y || !m || !d) return null;
+    return new Date(y, m - 1, d);
+}
+
+function fmtISO(dateObj) {
+    if (!dateObj) return '';
+    const p = n => String(n).padStart(2, '0');
+    return `${dateObj.getFullYear()}-${p(dateObj.getMonth() + 1)}-${p(dateObj.getDate())}`;
+}
+
+// Whole calendar days between two dates, immune to DST because it compares UTC triples
+// built from the local Y/M/D fields rather than subtracting raw timestamps.
 function dateDiffDays(d1, d2) {
-    return Math.round((d2 - d1) / (1000 * 60 * 60 * 24));
+    const a = Date.UTC(d1.getFullYear(), d1.getMonth(), d1.getDate());
+    const b = Date.UTC(d2.getFullYear(), d2.getMonth(), d2.getDate());
+    return Math.round((b - a) / 86400000);
 }
 
 function addDays(date, days) {
-    const d = new Date(date);
-    d.setDate(d.getDate() + days);
-    return d;
+    return new Date(date.getFullYear(), date.getMonth(), date.getDate() + Math.trunc(days));
 }
 
+// Clamps to the last day of the target month. Plain setMonth() overflows instead:
+// 2026-08-31 + 6 months would give 2027-03-03 rather than 2027-02-28.
 function addMonths(date, months) {
-    const d = new Date(date);
-    d.setMonth(d.getMonth() + months);
-    return d;
+    const y = date.getFullYear(), m = date.getMonth(), day = date.getDate();
+    const lastDayOfTarget = new Date(y, m + months + 1, 0).getDate();
+    return new Date(y, m + months, Math.min(day, lastDayOfTarget));
 }
 
 function formatDate(dateObj) {
     if (!dateObj) return 'N/A';
-    return dateObj.toISOString().split('T')[0];
+    return fmtISO(dateObj);
+}
+
+function setFieldError(elId, msg) {
+    const el = document.getElementById(elId);
+    if (el) { el.textContent = msg; el.style.display = msg ? 'block' : 'none'; }
+    return false;
 }
 
 function showToast(msg) {
@@ -43,7 +73,7 @@ function getDailyKm(vehicle) {
         const r1 = readings[i];
         for (let j = i - 1; j >= 0; j--) {
             const r2 = readings[j];
-            const days = dateDiffDays(new Date(r2.date), new Date(r1.date));
+            const days = dateDiffDays(parseLocalDate(r2.date), parseLocalDate(r1.date));
             if (days > 0) {
                 let rate = (r1.km - r2.km) / days;
                 if (rate < 0) rate = 0; 
@@ -65,7 +95,7 @@ function calculateItemDue(vehicle, item) {
     
     if (item.rule === 'fixed_date') {
         if (item.due_date) {
-            dueDate = new Date(item.due_date);
+            dueDate = parseLocalDate(item.due_date);
             basis = `Fixed date: ${item.due_date}`;
         } else {
             basis = `Missing due date`;
@@ -74,9 +104,9 @@ function calculateItemDue(vehicle, item) {
     else if (item.rule === 'period_months') {
         let baseDate;
         if (lastService) {
-            baseDate = new Date(lastService.date);
+            baseDate = parseLocalDate(lastService.date);
         } else if (firstOdo) {
-            baseDate = new Date(firstOdo.date);
+            baseDate = parseLocalDate(firstOdo.date);
             basis = 'Estimated from first reading. ';
         }
         
@@ -102,7 +132,13 @@ function calculateItemDue(vehicle, item) {
         const rate = getDailyKm(vehicle);
         
         if (rate !== null && rate > 0) {
-            const daysRemaining = kmRemaining / rate;
+            // Round away from today and clamp: a raw fraction would floor (14.6 days reads as 14,
+            // flipping "fine" to "due soon"), and an unclamped 2,578-day projection would dominate
+            // every sort key it touches.
+            const raw = kmRemaining / rate;
+            const daysRemaining = raw < 0
+                ? -Math.min(Math.ceil(-raw), MAX_PROJECT_DAYS)
+                : Math.min(Math.ceil(raw), MAX_PROJECT_DAYS);
             dueDate = addDays(STATE.today, daysRemaining);
             if (kmRemaining < 0) {
                 basis += `Threshold passed by ${Math.abs(kmRemaining)} km at ${rate.toFixed(1)} km/day`;
@@ -127,7 +163,7 @@ function calculateItemDue(vehicle, item) {
         if (daysUntil < 0) {
             status = 'overdue';
             daysOverdue = Math.abs(daysUntil);
-        } else if (daysUntil <= 14) {
+        } else if (daysUntil <= DUE_SOON_DAYS) {
             status = 'due_soon';
         } else {
             status = 'fine';
@@ -368,9 +404,17 @@ function renderVehicleDetail(id) {
             <td><span class="item-badge ${badgeClass}">${a.status.replace('_', ' ').toUpperCase()}</span></td>
             <td>
                 <button class="btn btn-small btn-secondary" onclick="document.getElementById('record-form-${index}').style.display='block'">Record</button>
-                <div id="record-form-${index}" style="display:none; margin-top:0.5rem; background:var(--bg-dark); padding:0.5rem; border-radius:4px; border:1px solid var(--border);">
-                    <input type="date" id="record-date-${index}" class="form-control" value="${STATE.today.toISOString().split('T')[0]}" style="margin-bottom:0.5rem;">
-                    <input type="number" id="record-km-${index}" class="form-control" placeholder="Odometer km" value="${latestOdo ? latestOdo.km : ''}" style="margin-bottom:0.5rem;">
+                <div id="record-form-${index}" class="record-form" style="display:none;">
+                    <label class="field-label" for="record-date-${index}">Service date</label>
+                    <input type="date" id="record-date-${index}" class="form-control" value="${fmtISO(STATE.today)}" max="${fmtISO(STATE.today)}">
+                    ${a.item.rule === 'distance_km' ? `
+                    <label class="field-label" for="record-km-${index}">Odometer at service (km)</label>
+                    <input type="number" id="record-km-${index}" class="form-control" placeholder="Odometer km" value="${latestOdo ? latestOdo.km : ''}">` : ''}
+                    ${a.item.rule === 'fixed_date' ? `
+                    <label class="field-label" for="record-due-${index}">New due date <span class="req">required</span></label>
+                    <input type="date" id="record-due-${index}" class="form-control" value="${fmtISO(addMonths(STATE.today, 12))}">
+                    <div class="field-hint">The certificate authority sets this date, so it is entered, not calculated.</div>` : ''}
+                    <div class="field-error" id="record-err-${index}"></div>
                     <button class="btn btn-small" onclick="recordService('${v.id}', ${index})">Save</button>
                     <button class="btn btn-small btn-secondary" onclick="document.getElementById('record-form-${index}').style.display='none'">Cancel</button>
                 </div>
@@ -420,7 +464,7 @@ window.updateOdometer = function(vid) {
     }
     
     v.odometer_readings.push({
-        date: STATE.today.toISOString().split('T')[0],
+        date: fmtISO(STATE.today),
         km: newKm
     });
     
@@ -431,28 +475,62 @@ window.updateOdometer = function(vid) {
 window.recordService = function(vid, itemIndex) {
     const v = STATE.vehicleById[vid];
     const item = v.service_items[itemIndex];
+    const err = (msg) => setFieldError(`record-err-${itemIndex}`, msg);
+
     const dateStr = document.getElementById(`record-date-${itemIndex}`).value;
-    const kmStr = document.getElementById(`record-km-${itemIndex}`).value;
-    
-    if (!dateStr) return alert("Date is required.");
-    const km = kmStr ? parseInt(kmStr, 10) : null;
-    
-    if (item.rule === 'distance_km' && km === null) {
-        return alert("Odometer reading is required for distance based items.");
+    const kmEl = document.getElementById(`record-km-${itemIndex}`);
+    const dueEl = document.getElementById(`record-due-${itemIndex}`);
+    const latestOdo = v.odometer_readings[v.odometer_readings.length - 1];
+    const currentKm = latestOdo ? latestOdo.km : 0;
+
+    if (!dateStr) return err("Enter the service date.");
+    if (parseLocalDate(dateStr) > STATE.today) {
+        return err(`Service date cannot be after ${fmtISO(STATE.today)}.`);
     }
-    
+
+    const priorForItem = v.service_history.filter(h => h.item === item.name);
+    const lastForItem = priorForItem.length ? priorForItem[priorForItem.length - 1] : null;
+    if (lastForItem && parseLocalDate(dateStr) < parseLocalDate(lastForItem.date)) {
+        return err(`A later service is already recorded for this item (${lastForItem.date}).`);
+    }
+
+    // Odometer km is meaningful only for distance-based items.
+    let km = null;
+    if (item.rule === 'distance_km') {
+        const kmStr = kmEl ? kmEl.value : '';
+        km = kmStr === '' ? null : parseInt(kmStr, 10);
+        if (km === null || isNaN(km)) return err("Enter the odometer reading for this service.");
+        if (km > currentKm) {
+            return err(`Service km cannot exceed the current odometer reading (${currentKm.toLocaleString()} km).`);
+        }
+        if (lastForItem && lastForItem.km !== null && km < lastForItem.km) {
+            return err(`Service km cannot be below the previous service km (${lastForItem.km.toLocaleString()} km).`);
+        }
+    }
+
+    // fixed_date items carry no renewal period in the schema, so the new expiry is entered,
+    // not derived. Without this the item would stay overdue forever after being recorded.
+    let newDueDate = null;
+    if (item.rule === 'fixed_date') {
+        newDueDate = dueEl ? dueEl.value : '';
+        if (!newDueDate) return err("Enter the new due date.");
+        if (parseLocalDate(newDueDate) <= parseLocalDate(dateStr)) {
+            return err("New due date must be after the service date.");
+        }
+    }
+
     v.service_history.push({
         item: item.name,
         date: dateStr,
         km: km,
         cost_bdt: item.cost_bdt
     });
-    
-    // re-sort history
-    v.service_history.sort((a, b) => new Date(a.date) - new Date(b.date));
-    
-    showToast(`Service recorded for ${item.name}!`);
-    renderVehicleDetail(vid); // re-render
+    v.service_history.sort((a, b) => a.date < b.date ? -1 : a.date > b.date ? 1 : 0);
+
+    if (newDueDate) item.due_date = newDueDate;
+
+    showToast(`Service recorded for ${item.name}`);
+    renderVehicleDetail(vid); // re-render — only this item's baseline moved
 }
 
 function renderForecast() {
@@ -506,13 +584,13 @@ async function init() {
         const json = await res.json();
         
         STATE.data = json.cases[0];
-        STATE.today = new Date(STATE.data.today);
+        STATE.today = parseLocalDate(STATE.data.today);
         
         STATE.data.owners.forEach(o => STATE.ownerById[o.id] = o);
         STATE.data.vehicles.forEach(v => {
-            v.odometer_readings.sort((a, b) => new Date(a.date) - new Date(b.date));
+            v.odometer_readings.sort((a, b) => a.date < b.date ? -1 : a.date > b.date ? 1 : 0);
             if (v.service_history) {
-                v.service_history.sort((a, b) => new Date(a.date) - new Date(b.date));
+                v.service_history.sort((a, b) => a.date < b.date ? -1 : a.date > b.date ? 1 : 0);
             } else {
                 v.service_history = [];
             }

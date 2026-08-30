@@ -32,18 +32,20 @@ across both problems) against ~2.5 of bonus given up. Not close.
 
 ## Tasks — one at a time, each fully finished before the next
 
-### T1 · Deploy, and keep a live URL from here on — **20 min** 🔴 EXISTENTIAL
-- [ ] Add `.nojekyll`, push, enable GitHub Pages on `main` (fallback: Vercel static)
+### T1 · Deploy, and keep a live URL from here on — **20 min** 🔴 EXISTENTIAL — ⏳ AWAITING USER
+- [x] Add `.nojekyll`, push (done — commit `47f461a`)
+- [ ] **USER: enable GitHub Pages** → Settings ▸ Pages ▸ Source: `main` / root
 - [ ] Verify the live URL loads and `P09_vehicle_service_public.json` fetches (no 404/CORS)
 - [ ] Confirm the call list renders on the deployed build, not just locally
 - [ ] Paste URL into the Discord team channel
 > Nothing else matters if the 22:00 health check finds nothing. Do this first, re-verify after every push.
 
-### T2 · Fix the `fixed_date` record no-op — **15 min** 🔴 MVP BULLET 4
-- [ ] Add a required **New due date** field to the record form, shown only for `fixed_date` items
-- [ ] On save: append the history row **and** write `item.due_date`
-- [ ] Verify: record Insurance on a vehicle → row leaves `overdue`, history gains the entry
-- [ ] Verify: no other item on that vehicle moves
+### T2 · Fix the `fixed_date` record no-op — ✅ **DONE** 🔴 MVP BULLET 4
+- [x] Required **New due date** field, shown only for `fixed_date` items, prefilled +1 year
+- [x] On save: append the history row **and** write `item.due_date`
+- [x] Verified: V01 Battery warranty `overdue/-5` → `fine/365`, history 3 → 4 rows
+- [x] Verified: **no other item on that vehicle moved**
+- [x] Odometer km field now hidden for period/fixed items (it was never meaningful there)
 > `calculateItemDue` reads only `item.due_date` for this rule, so today the Record button does
 > nothing for 66 of PUB-01's 165 items. A judge clicking Record on Insurance sees a dead button.
 
@@ -55,11 +57,13 @@ across both problems) against ~2.5 of bonus given up. Not close.
 > The judge screenshots the live URL. `style.css` currently has **zero** media queries, which is
 > named explicitly in the Weak band.
 
-### T4 · Engine correctness — **15 min** 🟠 TECHNICAL EXECUTION
-- [ ] Parse ISO dates to **local midnight**; drop `new Date(str)` and `toISOString()` for display
-- [ ] Clamp `addMonths` to the last day of the target month (`2026-08-31 + 6 → 2027-02-28`)
-- [ ] `Math.ceil` the fractional day projection; clamp at 3650 days
-- [ ] Re-verify PUB-01 still reads **45 overdue / 16 due_soon / 104 fine**
+### T4 · Engine correctness — ✅ **DONE** 🟠 TECHNICAL EXECUTION
+- [x] `parseLocalDate` / `fmtISO`; every `new Date(str)` and display `toISOString()` removed
+- [x] `addMonths` clamps to month end (`2026-08-31 + 6 → 2027-02-28`, `2024-02-29 + 12 → 2025-02-28`)
+- [x] `dateDiffDays` compares UTC triples built from local fields — DST-proof
+- [x] `Math.ceil` on the projection, clamped at `MAX_PROJECT_DAYS`
+- [x] Verified **1183 / 432 / 2573** all cases, **45 / 16 / 104** PUB-01 — matches PLAN.md §10
+- [x] Verified **identical fingerprint** under Asia/Dhaka, America/New_York, America/Los_Angeles
 > Output is currently timezone-dependent (45 overdue in Dhaka, 46 in New York). Judging runs off
 > an archived capture on someone else's infrastructure.
 
@@ -104,3 +108,6 @@ across both problems) against ~2.5 of bonus given up. Not close.
 
 ## Log
 - 20:12 — clock check: 107 min left, no live URL, track written, starting T1
+- 20:20 — T1 pushed, Pages needs one click from the user; started T2
+- 20:38 — **T2 + T4 done and verified headlessly.** Engine now TZ-invariant and matches
+  PLAN.md's golden numbers exactly. Next: T3 responsive (largest remaining judged gap).
