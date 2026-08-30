@@ -26,16 +26,11 @@ tailwind.config = {
   @media print { .no-print { display: none !important; } }
 </style>
 </head>
-<body class="bg-slate-50 text-slate-900 antialiased">
+<body class="bg-gradient-to-br from-indigo-50 via-white to-cyan-50 min-h-screen text-slate-900 antialiased">
   <div id="root">
     <div class="min-h-screen flex items-center justify-center text-slate-500 text-sm">Loading…</div>
   </div>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.production.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.26.4/babel.min.js"></script>
-  <script src="https://unpkg.com/framer-motion/dist/framer-motion.js"></script>
-  <script src="engine.js"></script>
-  <script type="text/babel" src="app.jsx" data-presets="react"></script>
+  <script type="module" src="/app.jsx"></script>
 </body>
 </html>

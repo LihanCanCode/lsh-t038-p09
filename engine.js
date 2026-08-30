@@ -265,4 +265,4 @@ const Engine = (function () {
            validateRecordService, validateOdometer, validateCase, normaliseCases, prepareCase };
 })();
 
-if (typeof module !== 'undefined' && module.exports) module.exports = Engine;
+export default Engine;

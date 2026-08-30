@@ -1,5 +1,7 @@
-const { useState, useEffect, useMemo, useRef, useCallback } = React;
-const motion = window.Motion ? window.Motion.motion : { div: 'div', button: 'button' };
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
+import ReactDOM from 'react-dom/client';
+import { motion, AnimatePresence } from 'framer-motion';
+import Engine from './engine.js';
 
 const DEFAULT_SOURCE = 'P09_vehicle_service_public.json';
 
@@ -131,10 +133,14 @@ function ItemLine({ a }) {
   );
 }
 
-function CallRow({ row, onCopy, copied }) {
+function CallRow({ row, onCopy, copied, index = 0 }) {
   const actionable = [...row.overdue, ...row.dueSoon, ...row.unknown];
   return (
-    <article className="rounded-xl border border-slate-200 bg-white shadow-card transition hover:shadow-lift">
+    <motion.article 
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: index * 0.05, duration: 0.4 }}
+      className="rounded-xl border border-slate-200 bg-white/70 backdrop-blur shadow-card transition hover:shadow-lift">
       <div className="flex flex-col gap-4 p-5 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
@@ -170,7 +176,7 @@ function CallRow({ row, onCopy, copied }) {
       <ul className="divide-y divide-slate-100 border-t border-slate-100 px-5 py-1">
         {actionable.map((a, i) => <ItemLine key={i} a={a} />)}
       </ul>
-    </article>
+    </motion.article>
   );
 }
 
@@ -212,7 +218,7 @@ function CallList({ ds }) {
         <Stat value={Engine.tk(stats.value)} label="estimated value" />
       </div>
       <div className="space-y-3">
-        {rows.map(r => <CallRow key={r.vehicle.id} row={r} onCopy={copy} copied={copied === r.vehicle.id} />)}
+        {rows.map((r, i) => <CallRow key={r.vehicle.id} row={r} onCopy={copy} copied={copied === r.vehicle.id} index={i} />)}
       </div>
     </div>
   );
