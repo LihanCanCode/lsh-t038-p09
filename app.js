@@ -77,7 +77,7 @@ function calculateItemDue(vehicle, item) {
             baseDate = new Date(lastService.date);
         } else if (firstOdo) {
             baseDate = new Date(firstOdo.date);
-            basis = '⚠ Estimated from first reading. ';
+            basis = 'Estimated from first reading. ';
         }
         
         if (baseDate) {
@@ -93,7 +93,7 @@ function calculateItemDue(vehicle, item) {
             baseKm = lastService.km !== null ? lastService.km : (firstOdo ? firstOdo.km : 0);
         } else if (firstOdo) {
             baseKm = firstOdo.km;
-            basis = '⚠ Estimated from first reading. ';
+            basis = 'Estimated from first reading. ';
         }
         
         const dueAtKm = baseKm + item.every_km;
@@ -231,7 +231,7 @@ function renderCallList() {
     const container = document.getElementById('call-list-container');
     
     if (entries.length === 0) {
-        container.innerHTML = '<div class="empty-state">No calls needed today 🎉</div>';
+        container.innerHTML = '<div class="empty-state">No calls needed today</div>';
         return;
     }
     
@@ -242,10 +242,10 @@ function renderCallList() {
     entries.forEach(e => {
         let itemsHtml = '';
         e.overdue.forEach(i => {
-            itemsHtml += `<span class="item-badge status-overdue">🔴 ${i.item.name}</span> <span class="item-reason">${i.basis}</span>`;
+            itemsHtml += `<span class="item-badge status-overdue">${i.item.name}</span> <span class="item-reason">${i.basis}</span>`;
         });
         e.dueSoon.forEach(i => {
-            itemsHtml += `<span class="item-badge status-due_soon">🟡 ${i.item.name}</span> <span class="item-reason">${i.basis}</span>`;
+            itemsHtml += `<span class="item-badge status-due_soon">${i.item.name}</span> <span class="item-reason">${i.basis}</span>`;
         });
 
         let smsText = `Dear ${e.owner.name},\nYour vehicle ${e.vehicle.model} (${e.vehicle.plate}) has services due:\n`;
@@ -347,7 +347,6 @@ function renderVehicleDetail(id) {
     
     v.analyzedItems.forEach((a, index) => {
         let badgeClass = `status-${a.status}`;
-        let badgeIcon = a.status === 'overdue' ? '🔴' : a.status === 'due_soon' ? '🟡' : a.status === 'fine' ? '🟢' : '⚪';
         
         html += `
         <tr>
@@ -355,10 +354,10 @@ function renderVehicleDetail(id) {
             <td><span style="font-size:0.85rem;color:var(--text-muted);">${a.item.rule}</span></td>
             <td>${a.dueDate ? formatDate(a.dueDate) : 'Unknown'}<br><span style="font-size:0.75rem;color:var(--text-muted);">${a.basis}</span></td>
             <td>৳${a.cost.toFixed(2)}</td>
-            <td><span class="item-badge ${badgeClass}">${badgeIcon} ${a.status.replace('_', ' ').toUpperCase()}</span></td>
+            <td><span class="item-badge ${badgeClass}">${a.status.replace('_', ' ').toUpperCase()}</span></td>
             <td>
                 <button class="btn btn-small btn-secondary" onclick="document.getElementById('record-form-${index}').style.display='block'">Record</button>
-                <div id="record-form-${index}" style="display:none; margin-top:0.5rem; background:#121212; padding:0.5rem; border-radius:4px; border:1px solid var(--border);">
+                <div id="record-form-${index}" style="display:none; margin-top:0.5rem; background:var(--bg-dark); padding:0.5rem; border-radius:4px; border:1px solid var(--border);">
                     <input type="date" id="record-date-${index}" class="form-control" value="${STATE.today.toISOString().split('T')[0]}" style="margin-bottom:0.5rem;">
                     <input type="number" id="record-km-${index}" class="form-control" placeholder="Odometer km" value="${latestOdo ? latestOdo.km : ''}" style="margin-bottom:0.5rem;">
                     <button class="btn btn-small" onclick="recordService('${v.id}', ${index})">Save</button>
