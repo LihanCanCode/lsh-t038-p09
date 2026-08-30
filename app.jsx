@@ -132,8 +132,8 @@ function DataBar({ ds, cases, caseIndex, source, onPick, onUpload, onReset, erro
 
 function Stat({ value, label, sub, tone }) {
   return (
-    <div className="flex-1 px-5 py-4">
-      <p className={`text-2xl font-bold tnum ${tone || 'text-slate-900'}`}>{value}</p>
+    <div className="px-4 py-3.5 sm:px-5 sm:py-4">
+      <p className={`text-xl font-bold tnum sm:text-2xl ${tone || 'text-slate-900'}`}>{value}</p>
       <p className="mt-0.5 text-xs font-medium text-slate-600">{label}</p>
       {sub && <p className="text-xs text-slate-400">{sub}</p>}
     </div>
@@ -226,7 +226,7 @@ function CallList({ ds }) {
 
   return (
     <div className="space-y-5">
-      <div className="flex flex-wrap divide-y divide-slate-200 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-card sm:divide-y-0 sm:divide-x">
+      <div className="grid grid-cols-2 divide-x divide-y divide-slate-200 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-card sm:grid-cols-4 sm:divide-y-0">
         <Stat value={stats.vehicles} label="vehicles to call" sub={`${stats.owners} owners`} />
         <Stat value={stats.overdue} label="items overdue" tone="text-rose-600" sub={`${stats.backlog} backlog-only`} />
         <Stat value={stats.soon} label={`due within ${Engine.DUE_SOON_DAYS} days`} tone="text-amber-600"
