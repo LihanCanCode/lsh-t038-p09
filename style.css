@@ -323,3 +323,80 @@ tr:last-child td {
     margin-bottom: 0.5rem;
     line-height: 1.35;
 }
+
+/* ---- Empty / status states (T3) ---- */
+.empty-state {
+    background: var(--bg-card);
+    border: 1px dashed var(--border);
+    border-radius: 8px;
+    padding: 3rem 1.5rem;
+    text-align: center;
+    color: var(--text-muted);
+}
+.empty-state strong { display: block; color: var(--text-main); font-size: 1.1rem; margin-bottom: 0.35rem; }
+
+/* Any table can overflow its container instead of stretching the page. */
+.table-wrap { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+/* ---- Responsive (T3) ---- */
+@media (max-width: 900px) {
+    .forecast-grid { min-width: 640px; }
+    .forecast-scroll { width: 100%; overflow-x: auto; padding-bottom: 0.5rem; }
+}
+
+@media (max-width: 768px) {
+    .header-content { flex-direction: column; align-items: flex-start; gap: 0.75rem; }
+    nav { gap: 1rem; flex-wrap: wrap; }
+    main { margin: 1.25rem auto; }
+    .view-header { margin-bottom: 1.25rem; }
+    .view-header h2 { font-size: 1.35rem; }
+    .info-panel { flex-direction: column; gap: 1.25rem; padding: 1.25rem; }
+    .flex-row { flex-direction: column; align-items: stretch; }
+    .flex-row .btn { width: 100%; }
+    .grid-container { grid-template-columns: 1fr; gap: 1rem; }
+    th, td { padding: 0.75rem; }
+
+    /* Stack every data table into labelled cards. The header row is hidden and each cell
+       carries its column name via data-label, so nothing needs horizontal scrolling. */
+    table.stacked, table.stacked tbody, table.stacked tr, table.stacked td { display: block; width: 100%; }
+    table.stacked thead { display: none; }
+    table.stacked { background: transparent; }
+    table.stacked tr {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        margin-bottom: 1rem;
+        padding: 0.25rem 0;
+    }
+    table.stacked td { border-bottom: 1px solid var(--border); padding: 0.75rem 1rem; text-align: left; }
+    table.stacked tr td:last-child { border-bottom: none; }
+    table.stacked td::before {
+        content: attr(data-label);
+        display: block;
+        font-size: 0.7rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--text-muted);
+        margin-bottom: 0.3rem;
+    }
+    table.stacked td.text-right { text-align: left; }
+}
+
+@media (max-width: 480px) {
+    h1 { font-size: 1.1rem; }
+    .view-header h2 { font-size: 1.2rem; }
+    main { padding: 0 0.75rem; }
+    .btn { width: 100%; margin-bottom: 0.4rem; }
+    .btn-small { width: auto; }
+    .record-form { min-width: 0; }
+}
+
+/* Keyboard focus must stay visible for anyone not using a mouse. */
+a:focus-visible, button:focus-visible, input:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+}
+
+/* Long plate numbers and reason strings must wrap rather than widen the page. */
+h1, h2, h3, p, td, th, .item-reason, .card-title, .card-subtitle { overflow-wrap: break-word; }

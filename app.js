@@ -278,11 +278,11 @@ function renderCallList() {
     const container = document.getElementById('call-list-container');
     
     if (entries.length === 0) {
-        container.innerHTML = '<div class="empty-state">No calls needed today</div>';
+        container.innerHTML = '<div class="empty-state"><strong>All caught up</strong>No vehicle has overdue or due-soon work today.</div>';
         return;
     }
     
-    let html = '<table><thead><tr><th class="owner-col">Owner</th><th class="vehicle-col">Vehicle</th><th class="items-col">Action Items</th><th class="cost-col">Est. Cost</th></tr></thead><tbody>';
+    let html = '<div class="table-wrap"><table class="stacked"><thead><tr><th class="owner-col">Owner</th><th class="vehicle-col">Vehicle</th><th class="items-col">Action Items</th><th class="cost-col">Est. Cost</th></tr></thead><tbody>';
 
     STATE.smsByVehicle = {};
 
@@ -303,21 +303,21 @@ function renderCallList() {
 
         html += `
         <tr>
-            <td>
+            <td data-label="Owner">
                 <strong>${e.owner.name}</strong><br>
                 <a href="tel:${e.owner.phone}" style="color:var(--primary);text-decoration:none;">${e.owner.phone}</a><br>
                 <button class="btn btn-small btn-secondary" style="margin-top:0.5rem;" onclick="copySms('${e.vehicle.id}')">Copy SMS</button>
             </td>
-            <td>
+            <td data-label="Vehicle">
                 <strong><a href="#/vehicle/${e.vehicle.id}" style="color:var(--text-main);">${e.vehicle.model}</a></strong><br>
                 ${e.vehicle.plate}
             </td>
-            <td>${itemsHtml}</td>
-            <td class="text-right"><strong>৳${e.totalCost.toFixed(2)}</strong></td>
+            <td data-label="Action Items">${itemsHtml}</td>
+            <td class="text-right" data-label="Estimated Cost"><strong>৳${e.totalCost.toFixed(2)}</strong></td>
         </tr>`;
     });
 
-    html += '</tbody></table>';
+    html += '</tbody></table></div>';
     container.innerHTML = html;
 }
 
@@ -340,7 +340,7 @@ function renderVehicles() {
                 <div style="color:var(--text-muted);font-size:0.875rem;">Owner: ${owner.name}</div>
             </div>`;
         });
-        container.innerHTML = html;
+        container.innerHTML = html || `<div class="empty-state"><strong>No vehicles match "${filter}"</strong>Try a model, plate, or owner name.</div>`;
     }
     
     search.addEventListener('input', e => draw(e.target.value));
@@ -379,15 +379,16 @@ function renderVehicleDetail(id) {
     </div>
     
     <div class="flex-row">
-        <div class="form-group" style="margin-bottom:0;">
-            <label>Update Odometer</label>
-            <input type="number" id="new-odo" class="form-control" placeholder="Enter new km..." min="${latestOdo ? latestOdo.km : 0}">
+        <div class="form-group" style="margin-bottom:0; flex:1;">
+            <label for="new-odo">Update odometer (km)</label>
+            <input type="number" id="new-odo" class="form-control" placeholder="e.g. ${latestOdo ? (latestOdo.km + 250).toLocaleString() : '50,000'}" min="${latestOdo ? latestOdo.km : 0}">
         </div>
         <button class="btn" onclick="updateOdometer('${v.id}')">Update</button>
     </div>
+    <div class="field-error" id="odo-err"></div>
     
     <h3 class="section-title">Service Items</h3>
-    <table>
+    <div class="table-wrap"><table class="stacked">
         <thead><tr><th>Item</th><th>Rule</th><th>Next Due</th><th>Cost</th><th>Status</th><th>Action</th></tr></thead>
         <tbody>
     `;
@@ -397,12 +398,12 @@ function renderVehicleDetail(id) {
         
         html += `
         <tr>
-            <td><strong>${a.item.name}</strong></td>
-            <td><span style="font-size:0.85rem;color:var(--text-muted);">${a.item.rule}</span></td>
-            <td>${a.dueDate ? formatDate(a.dueDate) : 'Unknown'}<br><span style="font-size:0.75rem;color:var(--text-muted);">${a.basis}</span></td>
-            <td>৳${a.cost.toFixed(2)}</td>
-            <td><span class="item-badge ${badgeClass}">${a.status.replace('_', ' ').toUpperCase()}</span></td>
-            <td>
+            <td data-label="Item"><strong>${a.item.name}</strong></td>
+            <td data-label="Rule"><span style="font-size:0.85rem;color:var(--text-muted);">${a.item.rule}</span></td>
+            <td data-label="Next Due">${a.dueDate ? formatDate(a.dueDate) : 'Unknown'}<br><span style="font-size:0.75rem;color:var(--text-muted);">${a.basis}</span></td>
+            <td data-label="Cost">৳${a.cost.toFixed(2)}</td>
+            <td data-label="Status"><span class="item-badge ${badgeClass}">${a.status.replace('_', ' ').toUpperCase()}</span></td>
+            <td data-label="Action">
                 <button class="btn btn-small btn-secondary" onclick="document.getElementById('record-form-${index}').style.display='block'">Record</button>
                 <div id="record-form-${index}" class="record-form" style="display:none;">
                     <label class="field-label" for="record-date-${index}">Service date</label>
@@ -422,22 +423,22 @@ function renderVehicleDetail(id) {
         </tr>`;
     });
     
-    html += `</tbody></table>`;
-    
+    html += `</tbody></table></div>`;
+
     html += `<h3 class="section-title">Service History</h3>`;
     if (v.service_history && v.service_history.length > 0) {
-        html += `<table><thead><tr><th>Date</th><th>Item</th><th>Odometer</th><th>Cost</th></tr></thead><tbody>`;
+        html += `<div class="table-wrap"><table class="stacked"><thead><tr><th>Date</th><th>Item</th><th>Odometer</th><th>Cost</th></tr></thead><tbody>`;
         [...v.service_history].reverse().forEach(h => {
             html += `<tr>
-                <td>${h.date}</td>
-                <td><strong>${h.item}</strong></td>
-                <td>${h.km !== null ? h.km.toLocaleString() + ' km' : '—'}</td>
-                <td>৳${parseFloat(h.cost_bdt).toFixed(2)}</td>
+                <td data-label="Date">${h.date}</td>
+                <td data-label="Item"><strong>${h.item}</strong></td>
+                <td data-label="Odometer">${h.km !== null ? h.km.toLocaleString() + ' km' : '—'}</td>
+                <td data-label="Cost">৳${parseFloat(h.cost_bdt).toFixed(2)}</td>
             </tr>`;
         });
-        html += `</tbody></table>`;
+        html += `</tbody></table></div>`;
     } else {
-        html += `<div style="color:var(--text-muted);">No service history found.</div>`;
+        html += `<div class="empty-state">No service recorded for this vehicle yet.</div>`;
     }
     
     document.getElementById('vehicle-detail-container').innerHTML = html;
@@ -458,10 +459,16 @@ window.updateOdometer = function(vid) {
     const newKm = parseInt(document.getElementById('new-odo').value, 10);
     const latestOdo = v.odometer_readings[v.odometer_readings.length - 1];
     
-    if (isNaN(newKm) || (latestOdo && newKm <= latestOdo.km)) {
-        alert("Please enter a valid km reading greater than the current reading.");
-        return;
+    if (isNaN(newKm)) {
+        return setFieldError('odo-err', "Enter the new odometer reading in km.");
     }
+    if (latestOdo && newKm < latestOdo.km) {
+        return setFieldError('odo-err', `Odometer cannot decrease. Current reading is ${latestOdo.km.toLocaleString()} km.`);
+    }
+    if (latestOdo && newKm === latestOdo.km) {
+        return setFieldError('odo-err', `That is already the current reading (${latestOdo.km.toLocaleString()} km).`);
+    }
+    setFieldError('odo-err', '');
     
     v.odometer_readings.push({
         date: fmtISO(STATE.today),

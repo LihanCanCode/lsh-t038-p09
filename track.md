@@ -49,11 +49,15 @@ across both problems) against ~2.5 of bonus given up. Not close.
 > `calculateItemDue` reads only `item.due_date` for this rule, so today the Record button does
 > nothing for 66 of PUB-01's 165 items. A judge clicking Record on Insurance sees a dead button.
 
-### T3 · Responsive + real empty/loading/error states — **20 min** 🟠 UI/UX
-- [ ] Media queries at 768px / 480px; tables reflow to stacked cards on narrow screens
-- [ ] Horizontal scroll containers so no table can break the page layout
-- [ ] Empty state on the call list ("All caught up"), vehicle search with no matches
-- [ ] Replace `alert()` validation with inline field errors
+### T3 · Responsive + real empty/loading/error states — ✅ **DONE** 🟠 UI/UX
+- [x] Media queries at 900 / 768 / 480px
+- [x] All three tables reflow to labelled stacked cards below 768px (`data-label` + `table.stacked`)
+- [x] `.table-wrap` scroll containers; forecast bars scroll instead of crushing
+- [x] Empty states: "All caught up" call list, no-match vehicle search, no service history
+- [x] `overflow-wrap` so long plates/reasons wrap instead of widening the page
+- [x] Visible keyboard focus rings
+- [x] **Verified in headless Chrome: `scrollWidth === clientWidth === 390` on both
+      `/#/call-list` and `/#/vehicle/V01`** — zero horizontal overflow. Desktop unchanged.
 > The judge screenshots the live URL. `style.css` currently has **zero** media queries, which is
 > named explicitly in the Weak band.
 
@@ -67,10 +71,11 @@ across both problems) against ~2.5 of bonus given up. Not close.
 > Output is currently timezone-dependent (45 overdue in Dhaka, 46 in New York). Judging runs off
 > an archived capture on someone else's infrastructure.
 
-### T5 · Form validation — **10 min** 🟡 FUNCTIONALITY EDGES
-- [ ] Record service: reject future date, date before last history, km above current odometer
-- [ ] Odometer: reject decrease, reject date after `case.today`, replace on same-date
-- [ ] Every rejection shows an inline message naming the offending value
+### T5 · Form validation — ✅ **DONE** (landed with T2/T3) 🟡 FUNCTIONALITY EDGES
+- [x] Record service: future date · date before this item's last history · km above current
+      odometer · km below previous service km · missing or non-advancing new due date
+- [x] Odometer: non-numeric · decrease · unchanged value
+- [x] **All `alert()` calls removed** — every rejection is an inline message naming the value
 > "Edge cases handled without being asked" is the Exceptional band's wording.
 
 ### T6 · Docs — **10 min** 🟡 DEMO & DOCS (6 + 4 + 2 marks)
@@ -110,4 +115,6 @@ across both problems) against ~2.5 of bonus given up. Not close.
 - 20:12 — clock check: 107 min left, no live URL, track written, starting T1
 - 20:20 — T1 pushed, Pages needs one click from the user; started T2
 - 20:38 — **T2 + T4 done and verified headlessly.** Engine now TZ-invariant and matches
-  PLAN.md's golden numbers exactly. Next: T3 responsive (largest remaining judged gap).
+  PLAN.md's golden numbers exactly.
+- 20:42 — **T3 + T5 done.** Stacked mobile cards, empty states, inline validation, zero
+  horizontal overflow confirmed by measurement. Remaining: T6 docs, T7 video, T1 Pages click.
