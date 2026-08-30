@@ -7,6 +7,7 @@ const STATE = {
 
 const DUE_SOON_DAYS = 14;      // an item within this many days of due is "due soon"
 const MAX_PROJECT_DAYS = 3650; // ceiling on a distance projection, so sort keys stay sane
+const CHRONIC_DAYS = 90;       // overdue beyond this is standing backlog, not fresh work
 
 // Date utilities.
 // Every date in this dataset is date-only ("2026-08-30"). `new Date(str)` would parse those as
@@ -224,6 +225,12 @@ function analyzeAll() {
                 overdue: vOverdueItems,
                 dueSoon: vDueSoonItems,
                 totalCost: totalCost,
+                maxDaysOverdue: maxDaysOverdue,
+                // Every overdue item here is more than CHRONIC_DAYS old. Period-based items build
+                // a standing backlog that never clears, so without this the same names sit at the
+                // top of the list every morning and crowd out work that just became due.
+                chronicOnly: vOverdueItems.length > 0 &&
+                             vOverdueItems.every(i => i.daysOverdue > CHRONIC_DAYS),
                 score: score
             });
         }
@@ -282,7 +289,21 @@ function renderCallList() {
         return;
     }
     
-    let html = '<div class="table-wrap"><table class="stacked"><thead><tr><th class="owner-col">Owner</th><th class="vehicle-col">Vehicle</th><th class="items-col">Action Items</th><th class="cost-col">Est. Cost</th></tr></thead><tbody>';
+    const totVeh = entries.length;
+    const totOwners = new Set(entries.map(e => e.vehicle.owner_id)).size;
+    const totOverdue = entries.reduce((n, e) => n + e.overdue.length, 0);
+    const totSoon = entries.reduce((n, e) => n + e.dueSoon.length, 0);
+    const totChronic = entries.filter(e => e.chronicOnly).length;
+    const totValue = entries.reduce((n, e) => n + e.totalCost, 0);
+
+    let html = `<div class="summary-bar">
+        <div class="summary-stat"><span class="summary-num">${totVeh}</span>vehicles to call<small>${totOwners} owners</small></div>
+        <div class="summary-stat"><span class="summary-num danger">${totOverdue}</span>items overdue<small>${totChronic} vehicles backlog-only</small></div>
+        <div class="summary-stat"><span class="summary-num warn">${totSoon}</span>due within ${DUE_SOON_DAYS} days</div>
+        <div class="summary-stat"><span class="summary-num">৳${totValue.toLocaleString()}</span>estimated value</div>
+    </div>`;
+
+    html += '<div class="table-wrap"><table class="stacked"><thead><tr><th class="owner-col">Owner</th><th class="vehicle-col">Vehicle</th><th class="items-col">Action Items</th><th class="cost-col">Est. Cost</th></tr></thead><tbody>';
 
     STATE.smsByVehicle = {};
 
@@ -304,7 +325,7 @@ function renderCallList() {
         html += `
         <tr>
             <td data-label="Owner">
-                <strong>${e.owner.name}</strong><br>
+                <strong>${e.owner.name}</strong>${e.chronicOnly ? ' <span class="chronic-tag" title="Every overdue item on this vehicle is more than ' + CHRONIC_DAYS + ' days old — standing backlog rather than new work">BACKLOG</span>' : ''}<br>
                 <a href="tel:${e.owner.phone}" style="color:var(--primary);text-decoration:none;">${e.owner.phone}</a><br>
                 <button class="btn btn-small btn-secondary" style="margin-top:0.5rem;" onclick="copySms('${e.vehicle.id}')">Copy SMS</button>
             </td>

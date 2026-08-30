@@ -400,3 +400,39 @@ a:focus-visible, button:focus-visible, input:focus-visible {
 
 /* Long plate numbers and reason strings must wrap rather than widen the page. */
 h1, h2, h3, p, td, th, .item-reason, .card-title, .card-subtitle { overflow-wrap: break-word; }
+
+/* ---- Call list summary bar (T8) ---- */
+.summary-bar {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 1.5rem;
+}
+.summary-stat {
+    background: var(--bg-card);
+    padding: 1rem 1.25rem;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+.summary-num { display: block; font-size: 1.6rem; font-weight: 700; color: var(--text-main); line-height: 1.2; }
+.summary-num.danger { color: var(--danger); }
+.summary-num.warn { color: var(--warning); }
+.summary-stat small { display: block; margin-top: 0.15rem; font-size: 0.7rem; opacity: 0.8; }
+.chronic-tag {
+    display: inline-block;
+    font-size: 0.6rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    padding: 0.1rem 0.35rem;
+    border-radius: 3px;
+    background: var(--unknown-bg);
+    color: var(--unknown);
+    border: 1px solid var(--unknown);
+    vertical-align: middle;
+}
+@media (max-width: 768px) { .summary-bar { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 380px) { .summary-bar { grid-template-columns: 1fr; } }
