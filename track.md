@@ -94,10 +94,23 @@ across both problems) against ~2.5 of bonus given up. Not close.
 - [ ] Every claim in the video must be reproducible live — a polished video of something that
       does not work scores nothing
 
-### T8 · Stretch, only if the clock allows — ⚪ SKIP WITHOUT REGRET
-- [ ] Split `engine.js` out of `app.js` (plain second `<script>`, no bundler)
-- [ ] `km: 0` baseline fix (149 items, but only 1 misclassification today)
-- [ ] Chronic (>90d) muting + daily cap on the call list
+### T8 · Call list summary + backlog marking — ✅ **DONE**
+- [x] Summary bar: vehicles to call · owners · items overdue · due-soon · estimated value
+- [x] `BACKLOG` tag on vehicles whose overdue work is *all* older than 90 days (9 of 37 in PUB-01)
+
+### T9 · Load any dataset — ✅ **DONE** 🟢 USER REQUEST
+- [x] **Load JSON** button + whole-window drag-and-drop
+- [x] Accepts `{cases:[...]}`, a bare array of cases, or a single case object
+- [x] **Case switcher** — all 25 cases now reachable (was hardcoded to `cases[0]`)
+- [x] Data bar shows active source, vehicle/owner counts and the case's `today`
+- [x] Schema validation with specific messages (bad rule name, no cases, malformed JSON)
+- [x] Unknown `owner_id` synthesises a placeholder + warning instead of blanking the dashboard
+- [x] "Use bundled data" to revert
+- [x] Verified: 25-case file, single-case file, bare array, 3 malformed files, ghost owner_id
+
+### T10 · Stretch — ⚪ SKIP WITHOUT REGRET
+- [ ] Split `engine.js` out of `app.js`
+- [ ] `km: 0` baseline fix (149 items, 1 misclassification today)
 
 ---
 
@@ -122,4 +135,7 @@ across both problems) against ~2.5 of bonus given up. Not close.
 - 20:22 — **T3 + T5 done.** Stacked mobile cards, empty states, inline validation, zero
   horizontal overflow confirmed by measurement.
 - 20:28 — **T6 done.** README / LICENSES / EDGE_CASES all rewritten against measured behaviour.
-- 20:28 — ⚠️ Pages still returning 404. **T1 and T7 are the only things left, both need the user.**
+- 20:28 — ⚠️ Pages still returning 404.
+- 20:40 — **T8 + T9 done.** Dataset is no longer hardcoded: upload any same-schema JSON,
+  switch between cases, with validation and graceful failure. All 25 cases now reachable.
+- ⚠️ **T1 (enable Pages) and T7 (record video) are the only things left, and both need the user.**

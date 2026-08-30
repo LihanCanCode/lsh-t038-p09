@@ -1,6 +1,10 @@
 const STATE = {
-    data: null,
-    today: null,
+    data: null,        // the active case
+    today: null,       // parsed from case.today — the only clock this app uses
+    cases: [],         // every case in the loaded file
+    caseIndex: 0,
+    source: '',        // filename shown in the data bar
+    warnings: [],
     ownerById: {},
     vehicleById: {}
 };
@@ -604,35 +608,184 @@ function renderForecast() {
     container.innerHTML = html;
 }
 
+// ---- Dataset loading ----------------------------------------------------------
+// The engine never assumes the bundled fixture. Any JSON of the same shape can be loaded,
+// either from disk on startup or uploaded by the user, and everything recomputes from it.
+
+const REQUIRED_RULES = ['fixed_date', 'period_months', 'distance_km'];
+
+// Returns an array of problems, empty if the case is usable.
+function validateCase(c, label) {
+    const errs = [];
+    if (!c || typeof c !== 'object') return [`${label} is not an object`];
+    if (!c.today || !parseLocalDate(c.today)) errs.push(`${label}: missing a valid "today" date (YYYY-MM-DD)`);
+    if (!Array.isArray(c.owners) || c.owners.length === 0) errs.push(`${label}: "owners" must be a non-empty array`);
+    if (!Array.isArray(c.vehicles) || c.vehicles.length === 0) errs.push(`${label}: "vehicles" must be a non-empty array`);
+    if (errs.length) return errs;
+
+    c.vehicles.forEach((v, i) => {
+        const vl = `${label} vehicle ${v && v.id ? v.id : '#' + (i + 1)}`;
+        if (!v.id) errs.push(`${vl}: missing "id"`);
+        if (!Array.isArray(v.service_items)) errs.push(`${vl}: missing "service_items" array`);
+        if (!Array.isArray(v.odometer_readings)) errs.push(`${vl}: missing "odometer_readings" array`);
+        (v.service_items || []).forEach(it => {
+            if (!it.name) errs.push(`${vl}: a service item has no "name"`);
+            if (!REQUIRED_RULES.includes(it.rule)) {
+                errs.push(`${vl} / ${it.name || '?'}: unknown rule "${it.rule}" (expected ${REQUIRED_RULES.join(', ')})`);
+            }
+        });
+    });
+    return errs.slice(0, 8); // enough to diagnose, not a wall of text
+}
+
+// Accepts either { cases: [...] }, a bare array of cases, or one case object.
+function normaliseCases(json) {
+    if (Array.isArray(json)) return json;
+    if (json && Array.isArray(json.cases)) return json.cases;
+    if (json && (json.vehicles || json.owners)) return [json];
+    throw new Error('Could not find any cases. Expected an object with a "cases" array, or a single case with "owners" and "vehicles".');
+}
+
+// Prepares one case for use: sorts the arrays the engine assumes are ordered, indexes
+// owners and vehicles, and substitutes a placeholder for any vehicle whose owner_id
+// does not resolve, so one bad reference cannot blank the whole dashboard.
+function activateCase(index) {
+    const c = STATE.cases[index];
+    STATE.caseIndex = index;
+    STATE.data = c;
+    STATE.today = parseLocalDate(c.today);
+    STATE.ownerById = {};
+    STATE.vehicleById = {};
+    STATE.warnings = [];
+
+    c.owners.forEach(o => { STATE.ownerById[o.id] = o; });
+    c.vehicles.forEach(v => {
+        v.odometer_readings = (v.odometer_readings || []).slice()
+            .sort((a, b) => a.date < b.date ? -1 : a.date > b.date ? 1 : 0);
+        v.service_history = (v.service_history || []).slice()
+            .sort((a, b) => a.date < b.date ? -1 : a.date > b.date ? 1 : 0);
+        if (!STATE.ownerById[v.owner_id]) {
+            STATE.ownerById[v.owner_id] = { id: v.owner_id, name: `Unknown owner (${v.owner_id})`, phone: '' };
+            STATE.warnings.push(`Vehicle ${v.id} references owner "${v.owner_id}", which is not in the owners list.`);
+        }
+        STATE.vehicleById[v.id] = v;
+    });
+    renderDataBar();
+}
+
+// Validates a parsed JSON payload and makes it the active dataset.
+function applyDataset(json, sourceLabel) {
+    const cases = normaliseCases(json);
+    if (!cases.length) throw new Error('The file contains an empty "cases" array.');
+
+    const errs = validateCase(cases[0], cases[0].case_id || 'Case 1');
+    if (errs.length) throw new Error('This file does not match the expected schema:\n• ' + errs.join('\n• '));
+
+    STATE.cases = cases;
+    STATE.source = sourceLabel;
+    activateCase(0);
+
+    if (!window.location.hash || window.location.hash === '#/call-list') router();
+    else window.location.hash = '#/call-list';
+    return cases.length;
+}
+
+function renderDataBar() {
+    const bar = document.getElementById('data-bar');
+    if (!bar) return;
+    const c = STATE.data;
+    const options = STATE.cases.map((x, i) =>
+        `<option value="${i}"${i === STATE.caseIndex ? ' selected' : ''}>${x.case_id || 'Case ' + (i + 1)}</option>`).join('');
+
+    bar.innerHTML = `
+      <div class="data-bar-inner">
+        <div class="data-meta">
+          <span class="data-source" title="${STATE.source}">${STATE.source}</span>
+          <span class="data-facts">${c.vehicles.length} vehicles · ${c.owners.length} owners · as of ${c.today}</span>
+        </div>
+        <div class="data-actions">
+          ${STATE.cases.length > 1 ? `<label class="data-case"><span>Case</span>
+            <select id="case-select" class="data-select">${options}</select></label>` : ''}
+          <button class="btn btn-small btn-secondary" id="btn-upload">Load JSON</button>
+          ${STATE.source !== DEFAULT_SOURCE ? `<button class="btn btn-small btn-secondary" id="btn-reset-data">Use bundled data</button>` : ''}
+        </div>
+      </div>
+      <div class="field-error" id="data-err"></div>`;
+
+    const sel = document.getElementById('case-select');
+    if (sel) sel.addEventListener('change', e => { activateCase(Number(e.target.value)); router(); });
+    document.getElementById('btn-upload').addEventListener('click', () => document.getElementById('file-input').click());
+    const reset = document.getElementById('btn-reset-data');
+    if (reset) reset.addEventListener('click', () => loadBundled());
+
+    if (STATE.warnings.length) {
+        setFieldError('data-err', `${STATE.warnings.length} data issue(s): ${STATE.warnings.slice(0, 3).join(' ')}`);
+    }
+}
+
+function handleFile(file) {
+    if (!file) return;
+    if (!/\.json$/i.test(file.name)) {
+        return setFieldError('data-err', `"${file.name}" is not a .json file.`);
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+        let json;
+        try {
+            json = JSON.parse(reader.result);
+        } catch (err) {
+            return setFieldError('data-err', `That file is not valid JSON — ${err.message}`);
+        }
+        try {
+            const n = applyDataset(json, file.name);
+            showToast(`Loaded ${file.name}${n > 1 ? ` (${n} cases)` : ''}`);
+        } catch (err) {
+            setFieldError('data-err', err.message);
+        }
+    };
+    reader.onerror = () => setFieldError('data-err', 'Could not read that file.');
+    reader.readAsText(file);
+}
+
+const DEFAULT_SOURCE = 'P09_vehicle_service_public.json (bundled)';
+
+async function loadBundled() {
+    const res = await fetch('P09_vehicle_service_public.json');
+    if (!res.ok) throw new Error('Failed to load the bundled JSON file.');
+    applyDataset(await res.json(), DEFAULT_SOURCE);
+}
+
 // Init
 async function init() {
+    const fileInput = document.getElementById('file-input');
+    fileInput.addEventListener('change', e => {
+        handleFile(e.target.files[0]);
+        e.target.value = ''; // let the same file be picked twice
+    });
+
+    // Drag a file anywhere onto the page to load it.
+    ['dragover', 'drop'].forEach(evt => document.addEventListener(evt, e => e.preventDefault()));
+    document.addEventListener('dragenter', () => document.body.classList.add('dragging'));
+    document.addEventListener('dragleave', e => { if (!e.relatedTarget) document.body.classList.remove('dragging'); });
+    document.addEventListener('drop', e => {
+        document.body.classList.remove('dragging');
+        handleFile(e.dataTransfer.files[0]);
+    });
+
+    window.addEventListener('hashchange', router);
+
     try {
-        const res = await fetch('P09_vehicle_service_public.json');
-        if (!res.ok) throw new Error("Failed to load JSON file. Are you running a local server?");
-        const json = await res.json();
-        
-        STATE.data = json.cases[0];
-        STATE.today = parseLocalDate(STATE.data.today);
-        
-        STATE.data.owners.forEach(o => STATE.ownerById[o.id] = o);
-        STATE.data.vehicles.forEach(v => {
-            v.odometer_readings.sort((a, b) => a.date < b.date ? -1 : a.date > b.date ? 1 : 0);
-            if (v.service_history) {
-                v.service_history.sort((a, b) => a.date < b.date ? -1 : a.date > b.date ? 1 : 0);
-            } else {
-                v.service_history = [];
-            }
-            STATE.vehicleById[v.id] = v;
-        });
-        
-        window.addEventListener('hashchange', router);
-        router();
+        await loadBundled();
     } catch (e) {
         document.getElementById('app-root').innerHTML = `<div class="error" style="text-align:center; padding:3rem;">
-            <h2>Initialization Error</h2>
+            <h2>Could not load the bundled dataset</h2>
             <p>${e.message}</p>
-            <p style="margin-top:1rem; color:var(--text-muted); font-size:0.9rem;">If opening directly from disk (file://), try using a local web server (e.g. <code>python -m http.server</code>) to allow fetch API to work.</p>
+            <p style="margin-top:1rem; color:var(--text-muted); font-size:0.9rem;">
+              This page reads its data with <code>fetch</code>, which browsers block on <code>file://</code>.
+              Serve the folder over HTTP (e.g. <code>python3 -m http.server</code>), or use
+              <strong>Load JSON</strong> above to pick a file from disk.</p>
         </div>`;
+        renderDataBar();
     }
 }
 
