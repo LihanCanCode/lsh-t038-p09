@@ -1,4 +1,5 @@
 const { useState, useEffect, useMemo, useRef, useCallback } = React;
+const motion = window.Motion ? window.Motion.motion : { div: 'div', button: 'button' };
 
 const DEFAULT_SOURCE = 'P09_vehicle_service_public.json';
 
@@ -61,7 +62,7 @@ function Empty({ title, children }) {
 /* ---------- header + dataset bar ---------- */
 
 function Header({ route }) {
-  const tabs = [['#/call-list','Daily Call List'], ['#/vehicles','Vehicles'], ['#/forecast','Forecast']];
+  const tabs = [['#','Home'], ['#/call-list','Daily Call List'], ['#/vehicles','Vehicles'], ['#/forecast','Forecast']];
   const active = h => route === h || (h === '#/vehicles' && route.startsWith('#/vehicle/'));
   return (
     <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/90 backdrop-blur no-print">
@@ -87,42 +88,19 @@ function Header({ route }) {
   );
 }
 
-function DataBar({ ds, cases, caseIndex, source, onPick, onUpload, onReset, error }) {
-  const fileRef = useRef(null);
+function DataBar({ ds, route }) {
+  if (!ds || route === '#' || route === '') return null;
   return (
     <div className="border-b border-slate-200 bg-white no-print">
       <div className="mx-auto max-w-7xl px-4 py-2.5">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="min-w-0">
-            <p className="truncate text-xs font-semibold text-slate-700">{source}</p>
+            <p className="truncate text-xs font-semibold text-slate-700">Current Dataset</p>
             <p className="text-xs text-slate-500 tnum">
-              {ds ? `${ds.caseData.vehicles.length} vehicles · ${ds.caseData.owners.length} owners · as of ${ds.caseData.today}` : 'No dataset loaded'}
+              {ds.caseData.vehicles.length} vehicles · {ds.caseData.owners.length} owners · as of {ds.caseData.today}
             </p>
           </div>
-          <div className="flex items-center gap-2">
-            {cases.length > 1 && (
-              <label className="flex items-center gap-1.5 text-xs text-slate-500">
-                Case
-                <select value={caseIndex} onChange={e => onPick(Number(e.target.value))}
-                        className="rounded-lg border border-slate-300 bg-white px-2 py-1 text-xs font-medium text-slate-800 focus:border-blue-500 focus:outline-none">
-                  {cases.map((c, i) => <option key={i} value={i}>{c.case_id || `Case ${i+1}`}</option>)}
-                </select>
-              </label>
-            )}
-            <input ref={fileRef} type="file" accept="application/json,.json" className="hidden"
-                   onChange={e => { onUpload(e.target.files[0]); e.target.value = ''; }} />
-            <button onClick={() => fileRef.current.click()}
-                    className="rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-900/20">
-              Load JSON
-            </button>
-            {source !== DEFAULT_SOURCE && (
-              <button onClick={onReset} className="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50">
-                Use bundled
-              </button>
-            )}
-          </div>
         </div>
-        <ErrorNote>{error}</ErrorNote>
       </div>
     </div>
   );
@@ -463,27 +441,37 @@ function VehicleDetail({ id, ds, onMutate }) {
 /* ---------- forecast ---------- */
 
 function Forecast({ ds }) {
-  const f = useMemo(() => Engine.buildForecast(ds.caseData, ds.today), [ds]);
+  const [weeks, setWeeks] = useState(8);
+  const f = useMemo(() => Engine.buildForecast(ds.caseData, ds.today, weeks), [ds, weeks]);
   const max = Math.max(...f.revenue, 1);
   const total = f.revenue.reduce((a, b) => a + b, 0);
   return (
-    <div className="space-y-5">
-      <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-card">
-        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Next 8 weeks</p>
-        <p className="mt-1 text-2xl font-bold text-slate-900 tnum">{Engine.tk(total)}</p>
-        <p className="text-xs text-slate-500">{f.count.reduce((a, b) => a + b, 0)} service items falling due</p>
+    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-5">
+      <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-card flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Next {weeks} weeks</p>
+          <p className="mt-1 text-2xl font-bold text-slate-900 tnum">{Engine.tk(total)}</p>
+          <p className="text-xs text-slate-500">{f.count.reduce((a, b) => a + b, 0)} service items falling due</p>
+        </div>
+        <div className="flex flex-col gap-1 w-full sm:w-auto">
+          <label className="text-xs font-semibold text-slate-600">Forecast Range: {weeks} weeks</label>
+          <input type="range" min="4" max="16" value={weeks} onChange={e => setWeeks(Number(e.target.value))} className="w-full sm:w-48 accent-blue-600" />
+        </div>
       </div>
       <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white p-5 shadow-card">
         <div className="flex min-w-[560px] items-end gap-3" style={{ height: 260 }}>
           {f.revenue.map((rev, i) => (
-            <div key={i} className="flex flex-1 flex-col items-center justify-end gap-2">
+            <div key={i} className="flex h-full flex-1 flex-col items-center justify-end gap-2">
               <span className="text-xs font-semibold text-slate-700 tnum">{Engine.tk(rev)}</span>
-              <div className={`w-full rounded-t-md transition-all ${i === 0 ? 'bg-rose-500' : 'bg-blue-500'}`}
-                   style={{ height: `${Math.max((rev / max) * 100, 2)}%` }}
+              <motion.div 
+                   initial={{ height: "0%" }}
+                   animate={{ height: `${Math.max((rev / max) * 100, 2)}%` }}
+                   transition={{ type: 'spring', bounce: 0.3, duration: 0.8 }}
+                   className={`w-full rounded-t-md ${i === 0 ? 'bg-rose-500' : 'bg-blue-500'}`}
                    title={`${f.count[i]} items`} />
               <span className="text-xs text-slate-500 tnum">{f.count[i]}</span>
-              <span className="text-center text-[11px] leading-tight text-slate-500">
-                {i === 0 ? 'This week + backlog' : `Week ${i + 1}`}
+              <span className="text-center text-[11px] leading-tight text-slate-500 whitespace-nowrap">
+                {i === 0 ? 'W1 + backlog' : `W${i + 1}`}
               </span>
             </div>
           ))}
@@ -492,7 +480,64 @@ function Forecast({ ds }) {
       <p className="text-xs text-slate-500">
         Week 1 carries everything already overdue as well as work due in the next 7 days, so it is not fresh demand alone.
       </p>
-    </div>
+    </motion.div>
+  );
+}
+
+/* ---------- home ---------- */
+
+function Home({ ds, cases, caseIndex, source, onPick, onUpload, onReset, error }) {
+  const fileRef = useRef(null);
+  return (
+    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col items-center justify-center py-10 sm:py-20 text-center">
+      <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} transition={{ type: 'spring', bounce: 0.5 }} className="mb-6 flex h-20 w-20 sm:h-24 sm:w-24 items-center justify-center rounded-3xl bg-blue-600 text-3xl sm:text-4xl font-bold text-white shadow-lift">
+        VS
+      </motion.div>
+      <h2 className="text-3xl font-extrabold tracking-tight text-slate-900 sm:text-5xl">Vehicle Service Predictor</h2>
+      <p className="mt-4 max-w-2xl text-base sm:text-lg text-slate-600 px-4">
+        A smart predictive engine for car workshops to actively manage customer vehicles. It dynamically forecasts service due dates based on historical data.
+      </p>
+      
+      <div className="mt-10 flex flex-col items-center gap-4">
+        <input ref={fileRef} type="file" accept="application/json,.json" className="hidden"
+               onChange={e => { onUpload(e.target.files[0]); e.target.value = ''; }} />
+        <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+                onClick={() => fileRef.current.click()}
+                className="rounded-full bg-slate-900 px-8 py-3 text-sm font-semibold text-white shadow-lift hover:bg-slate-700">
+          Load JSON Dataset
+        </motion.button>
+        {source !== DEFAULT_SOURCE && (
+          <button onClick={onReset} className="text-sm font-medium text-blue-600 hover:underline">
+            Revert to bundled dataset
+          </button>
+        )}
+        <ErrorNote>{error}</ErrorNote>
+      </div>
+      
+      {ds && (
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }} className="mt-12 rounded-2xl border border-slate-200 bg-white p-6 shadow-card w-full max-w-md">
+          <p className="text-sm font-semibold uppercase tracking-wide text-slate-500">Current Dataset</p>
+          <p className="mt-2 text-xl font-bold text-slate-900 truncate">{source}</p>
+          <p className="text-sm text-slate-600 tnum mt-1">
+            {ds.caseData.vehicles.length} vehicles · {ds.caseData.owners.length} owners · as of {ds.caseData.today}
+          </p>
+          {cases.length > 1 && (
+            <div className="mt-4 flex flex-col sm:flex-row sm:items-center justify-center gap-2">
+              <span className="text-sm text-slate-500">Select Case:</span>
+              <select value={caseIndex} onChange={e => onPick(Number(e.target.value))}
+                      className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-800">
+                {cases.map((c, i) => <option key={i} value={i}>{c.case_id || `Case ${i+1}`}</option>)}
+              </select>
+            </div>
+          )}
+          <div className="mt-6">
+            <a href="#/call-list" className="inline-block rounded-lg bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-700 hover:bg-blue-100">
+              View Daily Call List →
+            </a>
+          </div>
+        </motion.div>
+      )}
+    </motion.div>
   );
 }
 
@@ -505,12 +550,12 @@ function App() {
   const [source, setSource] = useState(DEFAULT_SOURCE);
   const [error, setError] = useState(null);
   const [fatal, setFatal] = useState(null);
-  const [route, setRoute] = useState(window.location.hash || '#/call-list');
+  const [route, setRoute] = useState(window.location.hash || '#');
   const [dragging, setDragging] = useState(false);
   const [, bump] = useState(0);
 
   useEffect(() => {
-    const on = () => setRoute(window.location.hash || '#/call-list');
+    const on = () => setRoute(window.location.hash || '#');
     window.addEventListener('hashchange', on);
     return () => window.removeEventListener('hashchange', on);
   }, []);
@@ -570,7 +615,12 @@ function App() {
   }, [onUpload]);
 
   let view = null, title = '', subtitle = '';
-  if (ds) {
+  if (route === '#' || route === '') {
+    title = ''; subtitle = '';
+    view = <Home ds={ds} cases={cases} caseIndex={caseIndex} source={source} error={error}
+                 onPick={i => activate(cases, i, source)} onUpload={onUpload}
+                 onReset={() => fetch(DEFAULT_SOURCE).then(r => r.json()).then(j => apply(j, DEFAULT_SOURCE, true))} />;
+  } else if (ds) {
     if (route.startsWith('#/vehicle/')) {
       title = 'Vehicle'; subtitle = 'Every item, its rule, and the reason behind the date.';
       view = <VehicleDetail id={route.split('/')[2]} ds={ds} onMutate={onMutate} />;
@@ -578,7 +628,7 @@ function App() {
       title = 'Vehicles'; subtitle = `All ${ds.caseData.vehicles.length} vehicles in this case.`;
       view = <Vehicles ds={ds} />;
     } else if (route === '#/forecast') {
-      title = '8-Week Forecast'; subtitle = 'Upcoming workload and revenue.';
+      title = 'Forecast'; subtitle = 'Upcoming workload and revenue.';
       view = <Forecast ds={ds} />;
     } else {
       title = 'Daily Call List'; subtitle = 'Most overdue first, then highest value.';
@@ -589,9 +639,7 @@ function App() {
   return (
     <div className="min-h-screen">
       <Header route={route} />
-      <DataBar ds={ds} cases={cases} caseIndex={caseIndex} source={source} error={error}
-               onPick={i => activate(cases, i, source)} onUpload={onUpload}
-               onReset={() => fetch(DEFAULT_SOURCE).then(r => r.json()).then(j => apply(j, DEFAULT_SOURCE, true))} />
+      <DataBar ds={ds} route={route} />
       <main className="mx-auto max-w-7xl px-4 py-6">
         {fatal ? (
           <div className="rounded-xl border border-rose-200 bg-rose-50 p-6">
