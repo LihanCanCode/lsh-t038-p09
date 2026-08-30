@@ -44,7 +44,7 @@ const Engine = (function () {
     const n = parseFloat(String(s).replace(/,/g, ''));
     return isFinite(n) ? n : 0;
   }
-  function tk(n) { return '৳' + Number(n).toLocaleString('en-IN', { maximumFractionDigits: 0 }); }
+  function tk(n) { return 'Tk ' + Number(n).toLocaleString('en-IN', { maximumFractionDigits: 0 }); }
 
   /* ---- daily running rate, from this vehicle's own odometer only ---- */
   function getDailyKm(vehicle) {
