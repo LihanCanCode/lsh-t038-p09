@@ -41,9 +41,24 @@ when insurance or a fitness certificate next expires.
 
 ---
 
-## How to run it
+## Tech stack
 
-Pure vanilla HTML, CSS and JavaScript. No build step, no dependencies, no backend.
+React 18 + Tailwind CSS, with **no build step** — React, Babel (for the in-browser JSX transform)
+and Tailwind all load from CDNs, so the repository is served as static files exactly as it sits.
+
+The calculation engine lives in [`engine.js`](engine.js) as a pure module: no DOM, no globals, and
+no wall clock — `today` always comes from `case.today`. That separation is deliberate, so the engine
+can be unit-tested headlessly in Node independently of the UI. [`app.jsx`](app.jsx) contains only
+React components.
+
+```
+index.html    CDN tags + mount point
+engine.js     all service-due calculation, pure and testable
+app.jsx       all UI components
+classic.html  zero-dependency vanilla fallback build
+```
+
+## How to run it
 
 It loads `P09_vehicle_service_public.json` with `fetch`, so it needs to be served over HTTP —
 opening `index.html` from `file://` will be blocked by the browser.
@@ -54,7 +69,10 @@ python3 -m http.server 8000
 # then open http://localhost:8000
 ```
 
-Any static host works (GitHub Pages, Vercel, Netlify) — the whole app is three files plus the data.
+Any static host works (GitHub Pages, Vercel, Netlify) — there is nothing to compile.
+
+`classic.html` is a dependency-free vanilla build of the same app, kept as a fallback in case the
+CDNs are unreachable.
 
 ---
 
@@ -64,8 +82,10 @@ Any static host works (GitHub Pages, Vercel, Netlify) — the whole app is three
   reloads the original JSON. In production this would be a write to a real datastore; the app is
   already structured so that every view is derived from the case data, so swapping the source is a
   contained change.
-- **Single case.** The app loads `cases[0]` (`PUB-01` — 42 vehicles, 27 owners) from a file
-  containing 25 independent cases. The engine is case-agnostic; only the loader is fixed.
+- **Nothing is hardcoded to the fixture.** The app opens `cases[0]` of the bundled file by default,
+  but **Load JSON** (or dragging a file onto the page) accepts any dataset of the same shape —
+  `{cases:[...]}`, a bare array of cases, or a single case object — and a case switcher reaches all
+  25 cases. Invalid files are rejected with a message naming the actual problem.
 - **Messaging.** The reminder is generated and copied to the clipboard. Nothing is sent.
 - **No authentication** — a workshop-floor tool, assumed to run on a trusted machine.
 
@@ -100,7 +120,6 @@ reasoning behind each rule is in [PLAN.md](PLAN.md).
 - Triage the list: it currently surfaces 25 of 27 owners every day because `period_months` items
   form a standing backlog (38% of overdue items are more than 90 days old). A chronic/fresh split
   and a "called today" marker would turn the report into a workflow.
-- Case switcher for all 25 cases.
 - Treat `km: 0` in service history as a missing baseline rather than a literal odometer reading —
   it appears on 149 distance items and is a placeholder in at least 47 of them.
 - Automated test suite around the engine (the golden numbers above are currently verified by a
