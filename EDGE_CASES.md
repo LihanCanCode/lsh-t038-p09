@@ -143,8 +143,17 @@ items in this data.
 
 ---
 
-## 8. Guarded but not present in this data
+## 8. Items that cannot be dated
 
-Handled defensively, no UI built for them: odometer rollback, unsorted arrays, single-reading
-vehicles, orphaned history rows, malformed cost strings, missing `due_date` on a fixed item, and
-history dated after `case.today`.
+An item with no computable due date — a `fixed_date` row with no `due_date`, or a period item with
+no baseline at all — is **not** treated as `fine`. It is carried onto the call list in its own
+bucket, badged "needs review", ranked below every item that has a real date, and counted in the
+summary bar. Silently classifying it as fine would hide real work from the workshop.
+
+## 9. Guarded but not present in this data
+
+Verified against synthetic fixtures, no dedicated UI: odometer rollback (rate never goes negative),
+unsorted `service_history` / `odometer_readings` (sorted on load), single-reading and
+identical-date-reading vehicles (rate is `null`, no divide-by-zero), orphaned history rows naming an
+item that is not in `service_items` (ignored), malformed `cost_bdt` (parses to 0, never `NaN`),
+history dated after `case.today`, and history km above the current odometer.

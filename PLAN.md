@@ -110,8 +110,11 @@ are chronic** — more than 90 days overdue. Across all cases, 363 of 1,183 over
 leaves the workflow instead of being flagged for inspection. Zero occurrences on public data, so it
 has never been exercised.
 
-**Fix:** indeterminate items get `status: 'fine'` plus an explicit warning, and surface in the data
-issues panel rather than disappearing.
+**Fix:** indeterminate items keep `status: 'unknown'` and are now collected into their own bucket on
+the call list, ranked below both overdue and due-soon so they surface without ever outranking work
+that has a real date. They render as "— needs review" and are counted in the summary bar.
+Verified: a `fixed_date` item with no `due_date` previously produced zero call-list rows; it now
+produces one.
 
 ### P1-4 · No validation, no persistence, one case
 `recordService` and `updateOdometer` accept almost anything; state is in-memory and resets on

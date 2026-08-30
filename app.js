@@ -203,6 +203,7 @@ function analyzeAll() {
     STATE.data.vehicles.forEach(v => {
         let vOverdueItems = [];
         let vDueSoonItems = [];
+        let vUnknownItems = [];   // no computable due date — needs a human to look
         let totalCost = 0;
         let maxDaysOverdue = -1;
         let minDaysUntil = 9999;
@@ -217,17 +218,27 @@ function analyzeAll() {
                 vDueSoonItems.push(analysis);
                 totalCost += analysis.cost;
                 if (analysis.daysUntil < minDaysUntil) minDaysUntil = analysis.daysUntil;
+            } else if (analysis.status === 'unknown') {
+                // An item we cannot date (no due_date, no baseline) is not "fine" — it is
+                // unmeasured. Dropping it would hide real work from the workshop entirely.
+                vUnknownItems.push(analysis);
+                totalCost += analysis.cost;
             }
             return analysis;
         });
         
-        if (vOverdueItems.length > 0 || vDueSoonItems.length > 0) {
-            let score = vOverdueItems.length > 0 ? (1000 + maxDaysOverdue) : (500 - minDaysUntil);
+        if (vOverdueItems.length > 0 || vDueSoonItems.length > 0 || vUnknownItems.length > 0) {
+            // overdue > due-soon > needs-review, so unmeasurable items surface without
+            // ever outranking work with a real date on it.
+            let score = vOverdueItems.length > 0 ? (1000 + maxDaysOverdue)
+                      : vDueSoonItems.length > 0 ? (500 - minDaysUntil)
+                      : 100;
             callListEntries.push({
                 vehicle: v,
                 owner: STATE.ownerById[v.owner_id],
                 overdue: vOverdueItems,
                 dueSoon: vDueSoonItems,
+                unknown: vUnknownItems,
                 totalCost: totalCost,
                 maxDaysOverdue: maxDaysOverdue,
                 // Every overdue item here is more than CHRONIC_DAYS old. Period-based items build
@@ -298,12 +309,13 @@ function renderCallList() {
     const totOverdue = entries.reduce((n, e) => n + e.overdue.length, 0);
     const totSoon = entries.reduce((n, e) => n + e.dueSoon.length, 0);
     const totChronic = entries.filter(e => e.chronicOnly).length;
+    const totUnknown = entries.reduce((n, e) => n + (e.unknown ? e.unknown.length : 0), 0);
     const totValue = entries.reduce((n, e) => n + e.totalCost, 0);
 
     let html = `<div class="summary-bar">
         <div class="summary-stat"><span class="summary-num">${totVeh}</span>vehicles to call<small>${totOwners} owners</small></div>
         <div class="summary-stat"><span class="summary-num danger">${totOverdue}</span>items overdue<small>${totChronic} vehicles backlog-only</small></div>
-        <div class="summary-stat"><span class="summary-num warn">${totSoon}</span>due within ${DUE_SOON_DAYS} days</div>
+        <div class="summary-stat"><span class="summary-num warn">${totSoon}</span>due within ${DUE_SOON_DAYS} days${totUnknown ? `<small>${totUnknown} need review</small>` : ''}</div>
         <div class="summary-stat"><span class="summary-num">৳${totValue.toLocaleString()}</span>estimated value</div>
     </div>`;
 
@@ -319,10 +331,14 @@ function renderCallList() {
         e.dueSoon.forEach(i => {
             itemsHtml += `<span class="item-badge status-due_soon">${i.item.name}</span> <span class="item-reason">${i.basis}</span>`;
         });
+        (e.unknown || []).forEach(i => {
+            itemsHtml += `<span class="item-badge status-unknown">${i.item.name} — needs review</span> <span class="item-reason">${i.basis || 'No due date on record.'}</span>`;
+        });
 
         let smsText = `Dear ${e.owner.name},\nYour vehicle ${e.vehicle.model} (${e.vehicle.plate}) has services due:\n`;
         e.overdue.forEach(i => smsText += `- ${i.item.name} (Overdue, Est: ৳${i.cost})\n`);
         e.dueSoon.forEach(i => smsText += `- ${i.item.name} (Due Soon, Est: ৳${i.cost})\n`);
+        (e.unknown || []).forEach(i => smsText += `- ${i.item.name} (Needs review, Est: ৳${i.cost})\n`);
         smsText += `\nTotal estimated cost: ৳${e.totalCost.toFixed(2)}`;
         STATE.smsByVehicle[e.vehicle.id] = smsText;
 
