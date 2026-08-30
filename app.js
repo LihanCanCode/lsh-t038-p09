@@ -104,9 +104,17 @@ function calculateItemDue(vehicle, item) {
         if (rate !== null && rate > 0) {
             const daysRemaining = kmRemaining / rate;
             dueDate = addDays(STATE.today, daysRemaining);
-            basis += `Due at ${dueAtKm} km (~${kmRemaining} km away at ${rate.toFixed(1)} km/day)`;
+            if (kmRemaining < 0) {
+                basis += `Threshold passed by ${Math.abs(kmRemaining)} km at ${rate.toFixed(1)} km/day`;
+            } else {
+                basis += `Due at ${dueAtKm} km (~${kmRemaining} km away at ${rate.toFixed(1)} km/day)`;
+            }
         } else {
-            basis += `Due at ${dueAtKm} km (~${kmRemaining} km away, daily rate unknown)`;
+            if (kmRemaining < 0) {
+                basis += `Threshold passed by ${Math.abs(kmRemaining)} km (daily rate unknown)`;
+            } else {
+                basis += `Due at ${dueAtKm} km (~${kmRemaining} km away, daily rate unknown)`;
+            }
         }
     }
     
@@ -130,7 +138,10 @@ function calculateItemDue(vehicle, item) {
         const currentKm = latestOdo ? latestOdo.km : 0;
         if (currentKm >= dueAtKm) {
             status = 'overdue';
-            daysOverdue = 999;
+            const rate = getDailyKm(vehicle);
+            daysOverdue = (rate !== null && rate > 0) ? Math.round((currentKm - dueAtKm) / rate) : 999;
+        } else {
+            status = 'fine';
         }
     }
     
